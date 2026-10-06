@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aegis AI | CISO Shadow AI & DLP Command Center</title>
+  <meta name="description" content="Plataforma de Gobernanza y Prevención de Fuga de Datos (DLP) contra Shadow AI con inferencia local de ultrabaja latencia (<50ms) y cumplimiento ISO/IEC 42001.">
+  
+  <!-- Tipografía de vanguardia -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js para visualizaciones interactivas -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <link rel="stylesheet" href="/static/styles.css?v=3">
+</head>
+<body class="cyber-dark" data-active-view="overview">
+  <!-- Fondo con efecto de malla y orbe brillante en movimiento -->
+  <div class="ambient-glow orb-1"></div>
+  <div class="ambient-glow orb-2"></div>
+  <div class="cyber-grid"></div>
+
+  <!-- BARRA DE NAVEGACIÓN SUPERIOR PROFESIONAL (HEADER) -->
+  <header class="top-nav side-nav">
+    <div class="nav-brand">
+      <div class="brand-shield">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="m9 12 2 2 4-4" />
+        </svg>
+      </div>
+      <div class="brand-info">
+        <div class="brand-title-row">
+          <h1 class="brand-title">AEGIS DLP</h1>
+          <span class="brand-badge">SHADOW AI</span>
+          <span class="brand-tag">v1.0 SLM</span>
+        </div>
+        <p class="brand-subtitle">Gobernanza de TIC &bull; Inferencia On-Device &bull; ISO/IEC 42001</p>
+      </div>
+    </div>
+
+    <!-- MENÚ COMPLEMENTARIO DE NAVEGACIÓN (SECCIONES ACTIVAS) -->
+    <nav class="nav-menu-complementary" aria-label="Navegación del Dashboard">
+      <a href="#overview" class="nav-tab active" data-view="overview">
+        <span class="nav-tab-icon">📊</span>
+        <span>Resumen</span>
+      </a>
+      <a href="#sec-radar" class="nav-tab" data-view="radar">
+        <span class="nav-tab-icon">🛡️</span>
+        <span>Radar</span>
+      </a>
+      <a href="#sec-analytics" class="nav-tab" data-view="analytics">
+        <span class="nav-tab-icon">📈</span>
+        <span>Analítica</span>
+      </a>
+      <a href="#sec-audit" class="nav-tab" data-view="audit">
+        <span class="nav-tab-icon">📋</span>
+        <span>Bitácora</span>
+      </a>
+      <div class="nav-submenu">
+        <button class="nav-submenu-toggle" type="button" aria-expanded="true">
+          <span><span class="nav-tab-icon">⚙️</span> Operación</span>
+          <span class="submenu-chevron">⌄</span>
+        </button>
+        <div class="nav-submenu-items">
+          <a href="#sec-simulator" class="nav-tab nav-tab-sub" data-view="simulator">
+            <span class="nav-tab-icon">⚡</span>
+            <span>Simulador DLP</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- GRUPO DE BOTONES DE ACCIÓN DE ALTO IMPACTO -->
+    <div class="nav-controls">
+      <div class="system-status-chip">
+        <span class="pulse-indicator"></span>
+        <span id="nav-system-status">SLM ACTIVO (&lt; 1ms CPU)</span>
+      </div>
+      
+      <button class="btn-quick-action" id="btn-quick-test-excel" title="Ejecutar prueba de intercepción de Excel corporativo">
+        <span class="btn-icon">⚡</span>
+        <span>Probar Excel</span>
+      </button>
+
+      <a href="/v1/export-pdf" target="_blank" class="btn-cyber-nav btn-nav-primary" id="btn-export-pdf-nav">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        <span>Reporte ISO 42001</span>
+      </a>
+
+      <a href="/v1/export-csv" target="_blank" class="btn-cyber-nav btn-nav-secondary" title="Exportar bitácora forense en CSV">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+        </svg>
+        <span>CSV</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <main class="dashboard-container">
+    <section class="dashboard-intro" aria-labelledby="dashboard-title">
+      <div>
+        <span class="intro-eyebrow">AEGIS CONTROL ROOM / 01</span>
+        <h2 id="dashboard-title">Estado de gobernanza IA</h2>
+        <p>Supervisa el perímetro, detecta exposición y revisa la actividad reciente desde un solo lugar.</p>
+      </div>
+      <div class="intro-status">
+        <span class="status-dot"></span>
+        <span>Protección local activa</span>
+      </div>
+    </section>
+
+    <div class="section-label section-label-overview"><span>01</span><strong>Resumen operativo</strong><i></i></div>
+    <!-- SECCIÓN 1: CARDS EN MOVIMIENTO (KPIS REACTIVOS) -->
+    <section class="kpi-grid" id="sec-kpis">
+      <!-- Card 1: Total Auditados -->
+      <div class="motion-card card-cyan" id="card-total-audited">
+        <div class="card-border-glow"></div>
+        <div class="card-inner">
+          <div class="card-header">
+            <span class="card-category">AUDITORÍA TOTAL</span>
+            <div class="card-icon-wrap icon-cyan">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+            </div>
+          </div>
+          <div class="card-value-box">
+            <span class="card-number odometer" id="kpi-total">0</span>
+            <span class="card-unit">prompts</span>
+          </div>
+          <div class="card-footer">
+            <span class="pill pill-safe">100% En Perímetro</span>
+            <span class="card-detail">Inspección On-Device</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Bloqueos Mitigados -->
+      <div class="motion-card card-crimson" id="card-total-blocked">
+        <div class="card-border-glow"></div>
+        <div class="card-inner">
+          <div class="card-header">
+            <span class="card-category">FUGAS BLOQUEADAS</span>
+            <div class="card-icon-wrap icon-crimson">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+          </div>
+          <div class="card-value-box">
+            <span class="card-number odometer text-crimson" id="kpi-blocked">0</span>
+            <span class="card-unit">neutralizados</span>
+          </div>
+          <div class="card-footer">
+            <span class="pill pill-danger" id="kpi-block-rate">0.0% tasa bloqueo</span>
+            <span class="card-detail">Exfiltración evitada</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Nivel de Riesgo Promedio -->
+      <div class="motion-card card-amber" id="card-avg-risk">
+        <div class="card-border-glow"></div>
+        <div class="card-inner">
+          <div class="card-header">
+            <span class="card-category">NIVEL DE RIESGO MEDIO</span>
+            <div class="card-icon-wrap icon-amber">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+          </div>
+          <div class="card-value-box">
+            <span class="card-number odometer" id="kpi-risk">0.00</span>
+            <span class="card-unit">/ 1.00</span>
+          </div>
+          <div class="card-footer">
+            <div class="risk-meter-bar">
+              <div class="risk-meter-fill" id="kpi-risk-meter"></div>
+            </div>
+            <span class="card-detail">Score calibrado</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: Latencia de Inferencia -->
+      <div class="motion-card card-purple" id="card-latency">
+        <div class="card-border-glow"></div>
+        <div class="card-inner">
+          <div class="card-header">
+            <span class="card-category">LATENCIA MEDIA CPU</span>
+            <div class="card-icon-wrap icon-purple">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+            </div>
+          </div>
+          <div class="card-value-box">
+            <span class="card-number odometer text-purple" id="kpi-latency">0.8</span>
+            <span class="card-unit">ms</span>
+          </div>
+          <div class="card-footer">
+            <span class="pill pill-safe">Meta RNF &lt; 50ms</span>
+            <span class="card-detail">~1,960 req/s cap</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN 2: SIMULADOR INTERACTIVO Y RADAR DE AMENAZAS EN VIVO -->
+    <section class="interactive-grid">
+      
+      <!-- Panel de Pruebas en Vivo (Simulador de Prompts) -->
+      <div class="motion-card panel-large" id="sec-simulator">
+        <div class="panel-header">
+          <div class="panel-title-box">
+            <div class="pulse-dot-cyan"></div>
+            <div>
+              <h2>Simulador Interactivo de Interceptación DLP</h2>
+              <p>Prueba en tiempo real cómo el modelo neutraliza fugas de Excel, PII o Código</p>
+            </div>
+          </div>
+          
+          <!-- BOTONES DE PRESETS CON DISEÑO DE ALTO IMPACTO -->
+          <div class="presets-row">
+            <span class="presets-label">Vectores de Prueba:</span>
+            <button class="btn-preset preset-excel" data-preset="excel">
+              <span class="preset-icon">📊</span>
+              <span>Excel Empresa</span>
+            </button>
+            <button class="btn-preset preset-pii" data-preset="pii">
+              <span class="preset-icon">👤</span>
+              <span>PII Clientes</span>
+            </button>
+            <button class="btn-preset preset-code" data-preset="code">
+              <span class="preset-icon">🔑</span>
+              <span>Secretos AWS</span>
+            </button>
+            <button class="btn-preset preset-safe" data-preset="safe">
+              <span class="preset-icon">🌱</span>
+              <span>Consulta Segura</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="simulator-body">
+          <div class="prompt-input-wrapper">
+            <textarea id="sim-prompt-input" rows="5" placeholder="Escribe o pega aquí un prompt destinado a ChatGPT (ej: 'Ordéname este excel con los sueldos y ventas de mi empresa...')..."></textarea>
+            <div class="input-actions">
+              <span class="char-count" id="sim-char-count">0 / 4096 caracteres</span>
+              <button id="btn-run-audit" class="btn-cyber-primary">
+                <span class="btn-shimmer"></span>
+                <span class="btn-icon">⚡</span>
+                <span class="btn-text">Evaluar con Modelo DLP</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Resultado Dinámico en Movimiento -->
+          <div class="sim-result-card" id="sim-result-container" style="display: none;">
+            <div class="result-header">
+              <div class="result-verdict" id="result-badge">ALLOW</div>
+              <div class="result-metrics">
+                <span class="metric-tag">Inferencia: <strong id="res-time">0.5 ms</strong></span>
+                <span class="metric-tag">Riesgo: <strong id="res-score">0.97</strong></span>
+                <span class="metric-tag">Categoría: <strong id="res-category">Business_Secrets</strong></span>
+              </div>
+            </div>
+            <div class="result-body">
+              <div class="result-reason-box" id="res-reason-box">
+                <span class="reason-label">Motivo de Decisión:</span>
+                <p id="res-reason-text">El modelo detectó datos tabulares de Excel corporativo no autorizados para envío a IA.</p>
+              </div>
+              <div class="result-redacted-box">
+                <span class="reason-label">Muestra Anonimizada (Trazabilidad Forense SHA-256):</span>
+                <pre id="res-redacted-text"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Radar de Amenazas Shadow AI en Vivo -->
+      <div class="motion-card panel-radar" id="sec-radar">
+        <div class="panel-header">
+          <div class="panel-title-box">
+            <div class="pulse-dot-crimson"></div>
+            <div>
+              <h2>Radar Perimetral Shadow AI</h2>
+              <p>Monitoreo activo de vectores de exfiltración</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="radar-visual-wrap">
+          <div class="cyber-radar">
+            <div class="radar-sweep"></div>
+            <div class="radar-ring ring-1"></div>
+            <div class="radar-ring ring-2"></div>
+            <div class="radar-ring ring-3"></div>
+            <div class="radar-axis-h"></div>
+            <div class="radar-axis-v"></div>
+            
+            <!-- Puntos de Detección en el Radar -->
+            <div class="threat-dot dot-excel" title="Fuga de Excel Corporativo"><span>Excel Fuga</span></div>
+            <div class="threat-dot dot-pii" title="PII Interceptada"><span>PII</span></div>
+            <div class="threat-dot dot-code" title="Token AWS"><span>API Key</span></div>
+          </div>
+        </div>
+
+        <div class="radar-legend">
+          <div class="legend-item"><span class="dot-ind color-excel"></span> Business_Secrets (Excel/M&A)</div>
+          <div class="legend-item"><span class="dot-ind color-pii"></span> PII_Leak (DNI/Tarjetas)</div>
+          <div class="legend-item"><span class="dot-ind color-code"></span> Proprietary_Code (Keys/DB)</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-label section-label-analytics"><span>02</span><strong>Lectura de riesgo</strong><i></i></div>
+    <!-- SECCIÓN 3: GRÁFICOS Y ANÁLISIS DE CATEGORÍAS -->
+    <section class="charts-grid" id="sec-analytics">
+      <!-- Gráfico Donut: Distribución de Riesgos -->
+      <div class="motion-card chart-risk-card">
+        <div class="panel-header">
+          <div>
+            <span class="chart-kicker">MAPA DE EXPOSICIÓN</span>
+            <h2>Distribución por Clase de Riesgo</h2>
+          </div>
+        </div>
+        <div class="chart-wrapper chart-risk-wrapper">
+          <canvas id="chart-risk-distribution"></canvas>
+          <span class="chart-center-label">RIESGO<br><strong>GLOBAL</strong></span>
+        </div>
+      </div>
+
+      <!-- Gráfico de Tendencia Temporal -->
+      <div class="motion-card">
+        <div class="panel-header">
+          <h2>Monitoreo de Eventos en Tiempo Real</h2>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="chart-trend"></canvas>
+        </div>
+      </div>
+
+      <!-- Top Usuarios con Mayor Frecuencia de Bloqueo -->
+      <div class="motion-card">
+        <div class="panel-header">
+          <h2>Top Usuarios con Intentos Bloqueados</h2>
+        </div>
+        <div class="table-responsive-mini">
+          <table class="cyber-table" id="table-high-risk-users">
+            <thead>
+              <tr>
+                <th>Usuario ID</th>
+                <th>Bloqueos</th>
+                <th>Riesgo Medio</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="4" class="text-center text-muted">Cargando registros...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-label section-label-audit"><span>03</span><strong>Actividad reciente</strong><i></i></div>
+    <!-- SECCIÓN 4: BITÁCORA DE AUDITORÍA (AUDIT LOG EXPLORER) -->
+    <section class="motion-card panel-audit-log" id="sec-audit">
+      <div class="panel-header header-with-filters">
+        <div>
+          <h2>Bitácora de Auditoría en Tiempo Real (SQLite SHA-256)</h2>
+          <p>Trazabilidad inmutable de todas las transacciones auditadas</p>
+        </div>
+        <div class="audit-controls">
+          <input type="text" id="log-search-input" class="cyber-input" placeholder="🔍 Buscar por usuario, prompt...">
+          <select id="log-filter-action" class="cyber-select">
+            <option value="">Todas las Acciones</option>
+            <option value="BLOCK">Solo Bloqueados (BLOCK)</option>
+            <option value="ALLOW">Solo Permitidos (ALLOW)</option>
+          </select>
+          <select id="log-filter-category" class="cyber-select">
+            <option value="">Todas las Categorías</option>
+            <option value="Business_Secrets">Business_Secrets (Excel)</option>
+            <option value="PII_Leak">PII_Leak</option>
+            <option value="Proprietary_Code">Proprietary_Code</option>
+            <option value="Safe_Use">Safe_Use</option>
+            <option value="Code_Exploitation">Explotación de vulnerabilidades</option>
+            <option value="Data_Exfiltration">Exfiltración de datos</option>
+            <option value="Social_Engineering">Ingeniería social</option>
+            <option value="Role_Evasion_Jailbreak">Evasión por rol</option>
+            <option value="Legal_Misalignment">Desalineación legal</option>
+          </select>
+          <button id="btn-refresh-logs" class="btn-refresh-cyber" title="Actualizar registros en tiempo real">
+            <span class="refresh-icon">🔄</span>
+            <span>Refrescar</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="cyber-table" id="main-audit-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Fecha y hora (Perú)</th>
+              <th>Usuario</th>
+              <th>Destino</th>
+              <th>Decisión</th>
+              <th>Categoría</th>
+              <th>Riesgo</th>
+              <th>Latencia</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="audit-table-body">
+            <tr><td colspan="9" class="text-center text-muted">Cargando registros de auditoría...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Modal de Inspección Detallada de Log -->
+    <div class="inspect-modal-backdrop" id="inspect-modal" style="display: none;">
+      <div class="inspect-modal-card">
+        <div class="inspect-modal-header">
+          <h3>Detalle del Evento de Auditoría</h3>
+          <button class="btn-close-modal" id="btn-close-inspect">&times;</button>
+        </div>
+        <div class="inspect-modal-content" id="inspect-modal-body">
+          <!-- Renderizado dinámico -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- DOCK FLOTANTE COMPLEMENTARIO (QUICK ACTION FLOATING DOCK) -->
+  <aside class="floating-dock" aria-label="Menú Flotante Rápido">
+    <div class="dock-inner">
+      <button class="dock-btn active" data-target="sec-kpis" title="Ir a KPIs">
+        <span>📊</span>
+      </button>
+      <button class="dock-btn" data-target="sec-simulator" title="Ir a Simulador">
+        <span>⚡</span>
+      </button>
+      <button class="dock-btn" data-target="sec-radar" title="Ir a Radar">
+        <span>🛡️</span>
+      </button>
+      <button class="dock-btn" data-target="sec-analytics" title="Ir a Analítica">
+        <span>📈</span>
+      </button>
+      <button class="dock-btn" data-target="sec-audit" title="Ir a Bitácora">
+        <span>📋</span>
+      </button>
+      <div class="dock-separator"></div>
+      <button class="dock-btn dock-btn-accent" id="dock-btn-test-excel" title="Simular filtración de Excel de Empresa">
+        <span>🚨</span>
+      </button>
+      <button class="dock-btn dock-btn-top" id="dock-btn-top" title="Volver al inicio">
+        <span>⬆️</span>
+      </button>
+    </div>
+  </aside>
+
+  <footer class="dashboard-footer">
+    <p>Aegis DLP Shadow AI Governance Engine &bull; Cumplimiento ISO/IEC 42001:2023 &bull; EU AI Act Art. 52</p>
+  </footer>
+
+  <script src="/static/app.js?v=2"></script>
+</body>
+</html>

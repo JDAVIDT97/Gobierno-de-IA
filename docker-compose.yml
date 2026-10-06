@@ -1,0 +1,11 @@
+services:
+  aegis-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      AEGIS_ENV: production
+      AEGIS_RATE_LIMIT: 100/minute
+    volumes:
+      - ./api:/app/api
+    restart: unless-stopped

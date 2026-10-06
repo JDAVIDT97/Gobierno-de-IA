@@ -1,0 +1,25 @@
+[
+  {
+    "repository": "deepset/prompt-injections",
+    "revision": "4f61ecb038e9c3fb77e21034b22511b523772cdd",
+    "files_sha256": {
+      "data/test-00000-of-00001-701d16158af87368.parquet": "39ac797cabc157eeed58435a08593b2952bb6cb16fc394a2d383f447cc7b246e",
+      "data/train-00000-of-00001-9564e8b05b4757ab.parquet": "2e10bc7ab30f542c97e4e83e2a5683000b5057d25ec10908784c631d44124c04"
+    },
+    "card_sha256": "d90b4518dfe06154deeec938243d1ec9119bdfbfd2105aee9cf1567999764b94",
+    "license": "Card conflict: top-level Apache-2.0; dataset_info CC-BY-4.0. Retain attribution; review before redistribution.",
+    "task": "prompt_injection"
+  },
+  {
+    "repository": "nvidia/Aegis-AI-Content-Safety-Dataset-2.0",
+    "revision": "d86bb8bedff51d25ac834ab7838f1cc61acb7a2c",
+    "files_sha256": {
+      "test.json": "b0a6d602260524866053cb34105194f074f2c2906e3691b68d43b9e6e9318f35",
+      "train.json": "154fba82c71d9fa73abd2ca5588a198e693ddc816c83444df180a22f613e02f6",
+      "validation.json": "a97200e226ad4f6ba6a639982f817f675909bc74513859df3e8fc9a92951dfcd"
+    },
+    "card_sha256": "da2598e587850bacc77c0658f56d0ea430f55d1cf70b197eb06070871802d3ba",
+    "license": "CC-BY-4.0",
+    "task": "general_content_safety"
+  }
+]

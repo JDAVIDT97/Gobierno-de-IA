@@ -1,0 +1,12 @@
+{
+  "mode": "full_http_endpoint_with_inference_and_sqlite",
+  "num_samples": 1000,
+  "mean_latency_ms": 20.492,
+  "p50_latency_ms": 15.049,
+  "p95_latency_ms": 44.375,
+  "p99_latency_ms": 65.832,
+  "concurrency": 4,
+  "throughput_req_per_sec": 194.7,
+  "meets_latency_rnf": true,
+  "meets_throughput_rnf": true
+}

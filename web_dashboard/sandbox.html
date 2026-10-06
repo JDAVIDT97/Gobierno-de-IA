@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatGPT Sandbox | Entorno de Prueba Local para Extensión DLP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #212121;
+      --bg-input: #2f2f2f;
+      --text-main: #ececec;
+      --text-muted: #b4b4b4;
+      --neon-cyan: #00f0ff;
+      --neon-crimson: #ff2a5f;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Outfit', -apple-system, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: #171717;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-badge {
+      background: rgba(0, 240, 255, 0.15);
+      border: 1px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+    .btn-return {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.2s;
+    }
+    .btn-return:hover {
+      color: #fff;
+      border-color: var(--neon-cyan);
+    }
+    .chat-container {
+      flex: 1;
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      gap: 20px;
+    }
+    .instructions-card {
+      background: #1e1e1e;
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      border-radius: 14px;
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    .instructions-card h2 {
+      font-size: 16px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .instructions-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .sample-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .btn-sample {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-sample:hover {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--neon-cyan);
+    }
+    .btn-sample-danger {
+      background: rgba(255, 42, 95, 0.1);
+      border-color: rgba(255, 42, 95, 0.3);
+      color: #ff85a0;
+    }
+    .btn-sample-danger:hover {
+      background: rgba(255, 42, 95, 0.25);
+      border-color: var(--neon-crimson);
+      color: #fff;
+    }
+    .messages-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+    .message-item {
+      display: flex;
+      gap: 14px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .user-msg {
+      background: #2f2f2f;
+      align-self: flex-end;
+      max-width: 85%;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .assistant-msg {
+      background: #171717;
+      align-self: flex-start;
+      max-width: 90%;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .msg-avatar {
+      font-size: 18px;
+    }
+    .msg-content {
+      flex: 1;
+    }
+    .input-bar-container {
+      max-width: 840px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 16px 20px 24px;
+    }
+    .input-box-wrapper {
+      position: relative;
+      background: var(--bg-input);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 14px 50px 14px 18px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    #prompt-textarea {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      resize: none;
+      min-height: 48px;
+      max-height: 200px;
+      line-height: 1.5;
+    }
+    button[data-testid='send-button'] {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #fff;
+      color: #000;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    button[data-testid='send-button']:hover {
+      background: var(--neon-cyan);
+      transform: scale(1.05);
+    }
+    .input-footer-note {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <strong>ChatGPT Sandbox</strong>
+      <span class="logo-badge">Simulador Local Réplica DOM</span>
+      <div class="status-indicator">
+        <span class="status-dot"></span>
+        <span>Extensión Compatible: #prompt-textarea</span>
+      </div>
+    </div>
+    <a href="/" class="btn-return">← Volver al CISO Dashboard</a>
+  </header>
+
+  <main class="chat-container">
+    <div class="instructions-card">
+      <h2>🛡️ Banco de Pruebas en Vivo para la Extensión Chrome</h2>
+      <p>
+        Esta página replica con exactitud los selectores DOM de <strong>ChatGPT</strong> (<code>#prompt-textarea</code> y <code>button[data-testid='send-button']</code>).
+        Si tienes cargada la extensión en Chrome, <strong>la extensión interceptará en tiempo real cualquier prompt que intentes enviar aquí</strong>.
+      </p>
+      <div class="sample-buttons">
+        <span style="font-size: 12px; color: #888; align-self: center;">Probar con un clic:</span>
+        <button class="btn-sample btn-sample-danger" id="btn-copy-excel">
+          🚨 Pegar Excel de Empresa (Debe Bloquear)
+        </button>
+        <button class="btn-sample btn-sample-danger" id="btn-copy-pii">
+          👤 Pegar PII Clientes (Debe Bloquear)
+        </button>
+        <button class="btn-sample" id="btn-copy-safe">
+          🌱 Pegar Consulta Segura (Debe Permitir)
+        </button>
+      </div>
+    </div>
+
+    <div class="messages-stream" id="messages-list">
+      <div class="message-item assistant-msg">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-content">
+          <strong>ChatGPT:</strong> ¡Hola! ¿En qué puedo ayudarte hoy? Puedes escribir un prompt en la caja inferior o usar uno de los ejemplos rápidos. Si intentas enviar datos confidenciales de empresa, el guardrail DLP de Aegis detendrá el envío en milisegundos.
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="input-bar-container">
+    <div class="input-box-wrapper">
+      <textarea id="prompt-textarea" placeholder="Escribe un prompt para ChatGPT (o pega datos confidenciales de prueba)..."></textarea>
+      <button data-testid="send-button" aria-label="Send" title="Enviar prompt">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="19" x2="12" y2="5"></line>
+          <polyline points="5 12 12 5 19 12"></polyline>
+        </svg>
+      </button>
+    </div>
+    <p class="input-footer-note">
+      Los eventos permitidos se publican aquí; los eventos bloqueados activan el modal corporativo in-page y vacían el cuadro de texto.
+    </p>
+  </div>
+
+  <script>
+    const textarea = document.getElementById("prompt-textarea");
+    const sendBtn = document.querySelector("button[data-testid='send-button']");
+    const messagesList = document.getElementById("messages-list");
+
+    const SAMPLE_EXCEL = `ChatGPT, ordéname este excel de datos de mi empresa (Inversiones Andinas SAC). Quiero que lo ordenes por mayor margen de ventas:
+ID_Empleado\tNombre\tSueldo_Base\tVentas_Q3_USD\tMargen_Bruto
+EMP-101\tCarlos Mendoza\tS/14,500\t$240,000\t32%
+EMP-102\tElena Vasquez\tS/18,200\t$410,000\t38%
+EMP-103\tRodrigo Flores\tS/12,000\t$185,000\t29%`;
+
+    const SAMPLE_PII = `ChatGPT, procesa este reembolso de cliente confidencial: Titular Juan Carlos García Mendoza, DNI: 47891245, Tarjeta Visa: 4532 8901 2345 6789, Vencimiento: 08/28, CVV: 789, Monto: $1,450.00 USD.`;
+
+    const SAMPLE_SAFE = `Por favor explícame en 2 párrafos la diferencia conceptual entre concurrencia y paralelismo en sistemas informáticos.`;
+
+    document.getElementById("btn-copy-excel").addEventListener("click", () => {
+      textarea.value = SAMPLE_EXCEL;
+      textarea.focus();
+    });
+    document.getElementById("btn-copy-pii").addEventListener("click", () => {
+      textarea.value = SAMPLE_PII;
+      textarea.focus();
+    });
+    document.getElementById("btn-copy-safe").addEventListener("click", () => {
+      textarea.value = SAMPLE_SAFE;
+      textarea.focus();
+    });
+
+    // Simulación de respuesta si el prompt llega a enviarse (ALLOW)
+    function handleAllowedSend(text) {
+      if (!text.trim()) return;
+      
+      const userDiv = document.createElement("div");
+      userDiv.className = "message-item user-msg";
+      userDiv.innerHTML = `<div class="msg-content"><strong>Tú:</strong> ${escapeHtml(text)}</div>`;
+      messagesList.appendChild(userDiv);
+
+      textarea.value = "";
+
+      // Respuesta simulada de ChatGPT
+      setTimeout(() => {
+        const botDiv = document.createElement("div");
+        botDiv.className = "message-item assistant-msg";
+        botDiv.innerHTML = `
+          <div class="msg-avatar">🤖</div>
+          <div class="msg-content">
+            <strong>ChatGPT:</strong> [Respuesta simulada autorizada] He recibido tu consulta con éxito. Este contenido pasó la verificación de gobernanza de TIC (Safe_Use) sin restricciones.
+          </div>
+        `;
+        messagesList.appendChild(botDiv);
+        messagesList.scrollTop = messagesList.scrollHeight;
+      }, 400);
+
+      messagesList.scrollTop = messagesList.scrollHeight;
+    }
+
+    sendBtn.addEventListener("click", () => {
+      handleAllowedSend(textarea.value);
+    });
+
+    textarea.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        // Dejar que el listener del content script de la extensión lo intercepte primero
+      }
+    });
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

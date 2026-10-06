@@ -1,0 +1,220 @@
+/* Estilos CSS para el Modal In-Page de DLP Guard (extension/styles.css) */
+
+#dlp-guard-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 999999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 12, 20, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  animation: dlpFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dlp-modal-card {
+  position: relative;
+  width: 90%;
+  max-width: 520px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 42, 95, 0.35);
+  border-radius: 20px;
+  box-shadow: 0 25px 60px -15px rgba(255, 42, 95, 0.3), 0 0 30px rgba(14, 165, 233, 0.1);
+  overflow: hidden;
+  color: #f8fafc;
+  animation: dlpScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dlp-modal-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ff2a5f, #7000ff, #00f0ff);
+  box-shadow: 0 0 12px #ff2a5f;
+}
+
+.dlp-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 10px;
+}
+
+.dlp-alert-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ff2a5f;
+  background: rgba(255, 42, 95, 0.12);
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 42, 95, 0.25);
+}
+
+.dlp-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: #ff2a5f;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #ff2a5f;
+  animation: dlpPulse 1.4s infinite;
+}
+
+.dlp-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 26px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.dlp-close-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dlp-modal-body {
+  padding: 10px 24px 20px;
+  text-align: center;
+}
+
+.dlp-icon-container {
+  display: inline-flex;
+  padding: 14px;
+  background: rgba(255, 42, 95, 0.1);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 42, 95, 0.2);
+  margin-bottom: 14px;
+}
+
+.dlp-headline {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 6px;
+  letter-spacing: -0.5px;
+}
+
+.dlp-subline {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0 0 18px;
+  line-height: 1.4;
+}
+
+.dlp-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 14px;
+  text-align: left;
+  margin-bottom: 16px;
+}
+
+.dlp-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dlp-detail-item.full-width {
+  grid-column: span 2;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 8px;
+}
+
+.dlp-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.dlp-val {
+  font-size: 13px;
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+.dlp-highlight {
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.dlp-danger {
+  color: #ff2a5f;
+  font-weight: 700;
+}
+
+.dlp-metric {
+  color: #00f0ff;
+  font-family: monospace;
+}
+
+.dlp-compliance-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #94a3b8;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.dlp-modal-footer {
+  padding: 0 24px 22px;
+}
+
+.dlp-btn-action {
+  width: 100%;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #ff2a5f, #c53030);
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px -4px rgba(255, 42, 95, 0.5);
+  transition: all 0.2s;
+}
+
+.dlp-btn-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px -3px rgba(255, 42, 95, 0.65);
+  background: linear-gradient(135deg, #ff4070, #d63838);
+}
+
+@keyframes dlpFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dlpScaleUp {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes dlpPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.5; }
+}

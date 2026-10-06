@@ -1,0 +1,81 @@
+{
+  "version": 5,
+  "splits": {
+    "train": 1707,
+    "val": 510,
+    "test": 526
+  },
+  "counts": {
+    "train": {
+      "Safe_Use": 187,
+      "Business_Secrets": 187,
+      "Social_Engineering": 187,
+      "Role_Evasion_Jailbreak": 202,
+      "Proprietary_Code": 187,
+      "Code_Exploitation": 195,
+      "PII_Leak": 188,
+      "Data_Exfiltration": 187,
+      "Legal_Misalignment": 187
+    },
+    "val": {
+      "PII_Leak": 55,
+      "Legal_Misalignment": 55,
+      "Safe_Use": 55,
+      "Proprietary_Code": 55,
+      "Data_Exfiltration": 55,
+      "Role_Evasion_Jailbreak": 70,
+      "Social_Engineering": 55,
+      "Code_Exploitation": 55,
+      "Business_Secrets": 55
+    },
+    "test": {
+      "Proprietary_Code": 55,
+      "Legal_Misalignment": 55,
+      "PII_Leak": 61,
+      "Business_Secrets": 55,
+      "Social_Engineering": 57,
+      "Safe_Use": 58,
+      "Role_Evasion_Jailbreak": 70,
+      "Data_Exfiltration": 55,
+      "Code_Exploitation": 60
+    }
+  },
+  "languages": {
+    "train": {
+      "es": 1683,
+      "en": 9,
+      "und": 15
+    },
+    "val": {
+      "es": 495,
+      "und": 15
+    },
+    "test": {
+      "es": 495,
+      "en": 16,
+      "und": 15
+    }
+  },
+  "auxiliary_rows": 27816,
+  "legacy_rows_quarantined": 27000,
+  "duplicate_or_conflict_rows": 81,
+  "ready_for_training": true,
+  "ready_for_production_training": false,
+  "blockers": [],
+  "class_balance_max_min_ratio": {
+    "train": 1.0802,
+    "val": 1.2727,
+    "test": 1.2727
+  },
+  "deployment_review_blockers": [
+    "Synthetic Spanish scenarios still require independent human review for production deployment.",
+    "Public English/de injection labels do not evaluate all DLP categories.",
+    "Source license discrepancy requires review before redistribution.",
+    "Semantic paraphrase overlap and residual personal data require review."
+  ],
+  "model_input_columns": [
+    "text"
+  ],
+  "target_column": "label",
+  "no_automatic_translation": true
+}

@@ -1,0 +1,20 @@
+{
+  "model_type": "aegis-dlp",
+  "backend": "transformer",
+  "version": "5.0",
+  "classes": [
+    "Safe_Use",
+    "PII_Leak",
+    "Proprietary_Code",
+    "Business_Secrets",
+    "Code_Exploitation",
+    "Data_Exfiltration",
+    "Social_Engineering",
+    "Role_Evasion_Jailbreak",
+    "Legal_Misalignment"
+  ],
+  "threshold_block": 0.5,
+  "max_seq_length": 256,
+  "deployment_scope": "local_testing",
+  "quantization": "fp32"
+}

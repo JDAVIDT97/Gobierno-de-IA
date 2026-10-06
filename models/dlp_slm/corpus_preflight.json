@@ -1,0 +1,47 @@
+{
+  "integrity_passed": true,
+  "errors": [],
+  "coverage_gaps": [],
+  "ready_for_training": true,
+  "ready_for_production_training": false,
+  "counts": {
+    "train": {
+      "Safe_Use": 132,
+      "Business_Secrets": 132,
+      "Social_Engineering": 132,
+      "Code_Exploitation": 140,
+      "Role_Evasion_Jailbreak": 147,
+      "PII_Leak": 133,
+      "Data_Exfiltration": 132,
+      "Legal_Misalignment": 132,
+      "Proprietary_Code": 132
+    },
+    "val": {
+      "PII_Leak": 33,
+      "Safe_Use": 33,
+      "Legal_Misalignment": 33,
+      "Proprietary_Code": 33,
+      "Role_Evasion_Jailbreak": 48,
+      "Data_Exfiltration": 33,
+      "Social_Engineering": 33,
+      "Code_Exploitation": 33,
+      "Business_Secrets": 33
+    },
+    "test": {
+      "Proprietary_Code": 33,
+      "Legal_Misalignment": 33,
+      "Social_Engineering": 35,
+      "Business_Secrets": 33,
+      "PII_Leak": 39,
+      "Safe_Use": 36,
+      "Role_Evasion_Jailbreak": 48,
+      "Data_Exfiltration": 33,
+      "Code_Exploitation": 38
+    }
+  },
+  "dataset_files_sha256": {
+    "train.jsonl": "4b21baff51b4f54ec18a94aa6b073304715447669a38d4d3a3621e61cff5cf7a",
+    "val.jsonl": "3eb747f286cd34d3ea1b5642572b3794c43fd12fe52f66e3df497ad3b4811624",
+    "test.jsonl": "28b95f7039a9b8894b0785090146aba7444ed1aa34b63aaf3f43f32bdbebbec8"
+  }
+}

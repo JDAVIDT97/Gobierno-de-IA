@@ -1,0 +1,44 @@
+{
+  "name": "Aegis cybersecurity abuse taxonomy",
+  "version": "1.0.0",
+  "purpose": "Families of cyber-abuse intent that must be blocked before statistical inference.",
+  "policy": "BLOCK",
+  "families": [
+    {
+      "id": "CYBER_DOMAIN",
+      "category": "Code_Exploitation",
+      "label": "Cybersecurity, exploitation and offensive tooling",
+      "examples": ["hacking", "vulnerability", "malware", "ransomware", "SQL injection", "RCE"]
+    },
+    {
+      "id": "SOCIAL_ENGINEERING_PHISHING",
+      "category": "Social_Engineering",
+      "label": "Phishing, smishing, vishing and social engineering",
+      "examples": ["phishing", "phishin", "spear phishing", "smishing", "vishing", "fake support"]
+    },
+    {
+      "id": "IMPERSONATION_CREDENTIAL_THEFT",
+      "category": "Social_Engineering",
+      "label": "Impersonation and credential capture",
+      "examples": ["suplantacion", "impersonacion", "robo de identidad", "robo de credenciales"]
+    },
+    {
+      "id": "DATA_EXFILTRATION_LEAK",
+      "category": "Data_Exfiltration",
+      "label": "Data leakage, exfiltration and unauthorized disclosure",
+      "examples": ["filtrar datos", "filtracion de informacion", "fuga de datos", "data exfiltration"]
+    },
+    {
+      "id": "CRITICAL_INFRASTRUCTURE_SABOTAGE",
+      "category": "Code_Exploitation",
+      "label": "OT/ICS sabotage and critical infrastructure disruption",
+      "examples": ["SCADA", "PLC", "planta de agua", "red electrica", "hospital"]
+    },
+    {
+      "id": "POLICY_EVASION_JAILBREAK",
+      "category": "Role_Evasion_Jailbreak",
+      "label": "Jailbreak, prompt injection and control evasion",
+      "examples": ["ignore previous instructions", "bypass", "modo desarrollador"]
+    }
+  ]
+}

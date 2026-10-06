@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Shadow AI DLP Guard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #080c14;
+      color: #f1f5f9;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .title-box h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-status {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .badge-online { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-offline { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .card {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .stat-row:last-child { margin-bottom: 0; }
+    .label { color: #64748b; }
+    .val { color: #00f0ff; font-weight: 600; font-family: monospace; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #7000ff, #00f0ff);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(112, 0, 255, 0.3);
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .footer-sub {
+      margin-top: 10px;
+      font-size: 10px;
+      color: #475569;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title-box">
+      <h1>🛡️ DLP Guard</h1>
+    </div>
+    <div id="status-badge" class="badge-status badge-offline">
+      <span class="dot"></span>
+      <span id="status-text">Conectando...</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stat-row">
+      <span class="label">Modelo Local:</span>
+      <span class="val" id="model-ver">dlp-slm-v1.0</span>
+    </div>
+    <div class="stat-row">
+      <span class="label">Latencia Inferencia:</span>
+      <span class="val" id="lat-val">&lt; 5 ms (CPU)</span>
+    </div>
+    <div class="stat-row">
+      <span class="label">Logs de Auditoría:</span>
+      <span class="val" id="logs-count">0</span>
+    </div>
+    <div class="stat-row">
+      <span class="label">Objetivo de Cumplimiento:</span>
+      <span class="val" style="color:#10b981;">ISO/IEC 42001</span>
+    </div>
+  </div>
+
+  <button class="btn" id="open-dash-btn">Abrir CISO Dashboard</button>
+
+  <p class="footer-sub">Interceptación en ChatGPT, Claude y Gemini activa.</p>
+
+  <script src="popup.js"></script>
+</body>
+</html>
