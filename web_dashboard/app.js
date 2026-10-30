@@ -4,6 +4,21 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+  async function adminFetch(url) {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Consulta no disponible (HTTP ${response.status})`);
+    return response;
+  }
+  document.querySelectorAll('a[href^="/v1/export-"]').forEach(link => link.addEventListener("click", async event => {
+    event.preventDefault();
+    try {
+      const response = await adminFetch(link.getAttribute("href"));
+      const url = URL.createObjectURL(await response.blob());
+      const download = document.createElement("a"); download.href = url;
+      download.download = link.getAttribute("href").endsWith("pdf") ? "aegis_auditoria.pdf" : "aegis_auditoria.csv";
+      download.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) { console.warn(error.message); }
+  }));
   const simulatorUserId = localStorage.getItem("aegisSimulatorUserId") || crypto.randomUUID();
   localStorage.setItem("aegisSimulatorUserId", simulatorUserId);
   // Referencias DOM
@@ -44,6 +59,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const logSearch = document.getElementById("log-search-input");
   const logAction = document.getElementById("log-filter-action");
   const logCategory = document.getElementById("log-filter-category");
+  const logPageSize = document.getElementById("log-page-size");
+  let logRequestRevision = 0;
   const btnRefreshLogs = document.getElementById("btn-refresh-logs");
 
   // Modal de inspección
@@ -247,10 +264,10 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadKpis() {
     try {
       loadHealth();
-      const res = await fetch("/v1/kpis");
+      const res = await adminFetch("/v1/kpis");
       if (!res.ok) return;
       const data = await res.json();
-
+      kpiLatency.textContent = Number.isFinite(data.avg_inference_time_ms) ? data.avg_inference_time_ms.toFixed(2) : "—";
       animateValue(kpiTotal, parseInt(kpiTotal.textContent) || 0, data.total_audited, 600);
       animateValue(kpiBlocked, parseInt(kpiBlocked.textContent) || 0, data.total_blocked, 600);
       kpiBlockRate.textContent = `${data.block_rate_pct}% tasa bloqueo`;
@@ -262,6 +279,8 @@ document.addEventListener("DOMContentLoaded", () => {
       renderHighRiskUsers(data.high_risk_users);
     } catch (e) {
       console.warn("Error cargando KPIs:", e);
+      [kpiTotal, kpiBlocked, kpiRisk, kpiLatency].forEach(el => el.textContent = "—");
+      kpiBlockRate.textContent = "Datos no disponibles";
     }
   }
 
@@ -283,6 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderDistributionChart(categories) {
+    if (typeof Chart === "undefined") return;
     const ctx = document.getElementById("chart-risk-distribution");
     if (!ctx) return;
 
@@ -338,6 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderTrendChart(trend) {
+    if (typeof Chart === "undefined") return;
     const ctx = document.getElementById("chart-trend");
     if (!ctx) return;
 
@@ -399,20 +420,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // 6. CARGA Y FILTRADO DE LA BITÁCORA DE AUDITORÍA
   // -------------------------------------------------------------
   async function loadAuditLogs() {
+    const revision = ++logRequestRevision;
     const action = logAction.value;
     const category = logCategory.value;
     const search = logSearch.value.trim();
 
-    let url = `/v1/logs?limit=30`;
+    let url = `/v1/logs?limit=${logPageSize.value}`;
     if (action) url += `&action=${action}`;
     if (category) url += `&category=${category}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
 
     try {
-      const res = await fetch(url);
+      const res = await adminFetch(url);
       if (!res.ok) return;
       const data = await res.json();
-
+      if (revision !== logRequestRevision) return;
+      document.getElementById("log-record-count").textContent = `Mostrando ${data.items.length} de ${data.total} registros`;
       if (!data.items.length) {
         auditTableBody.innerHTML = "<tr><td colspan='9' class='text-center text-muted'>No se encontraron eventos coincidentes.</td></tr>";
         return;
@@ -449,7 +472,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
     } catch (e) {
-      console.warn("Error cargando logs:", e);
+      console.warn("No se pudo actualizar la bitácora:", e);
     }
   }
 
@@ -486,6 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
   logSearch.addEventListener("input", debounce(loadAuditLogs, 300));
   logAction.addEventListener("change", loadAuditLogs);
   logCategory.addEventListener("change", loadAuditLogs);
+  logPageSize.addEventListener("change", loadAuditLogs);
   
   btnRefreshLogs.addEventListener("click", () => {
     const icon = btnRefreshLogs.querySelector(".refresh-icon");
@@ -508,6 +532,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Inicialización y Polling Suave cada 8 segundos
   loadKpis();
   loadAuditLogs();
+  loadHealth();
   setInterval(() => {
     loadKpis();
     loadAuditLogs();

@@ -101,7 +101,7 @@ def test_defensive_identity_theft_guidance_is_allowed_before_ml():
     result = DlpEngine().evaluate("Crea una lista de controles para prevenir la suplantación de identidad.")
     assert result["action"] == "ALLOW"
     assert result["category"] == "Safe_Use"
-    assert result["matched_rules"] == ["POLICY: DEFENSIVE_SECURITY_GUIDANCE"]
+    assert result["matched_rules"] == ["POLICY: DEFENSIVE_AFTER_SENSITIVE_CHECKS"]
     assert DlpEngine().evaluate("Redacta un aviso de TI que indique usar solo enlaces institucionales oficiales.")["action"] == "ALLOW"
 
 
@@ -115,7 +115,7 @@ def test_safe_security_guidance_cases_are_allowed():
     for prompt in allowed:
         result = DlpEngine().evaluate(prompt)
         assert result["action"] == "ALLOW", prompt
-        assert result["matched_rules"] == ["POLICY: SAFE_SECURITY_GUIDANCE"]
+        assert result["category"] == "Safe_Use"
 
 
 def test_ethical_simulation_does_not_override_exploit_intent():
@@ -132,8 +132,8 @@ def test_ethical_simulation_does_not_override_exploit_intent():
 def test_academic_language_does_not_bypass_strict_security_policy():
     engine = DlpEngine()
     assert engine.evaluate("Tarea: explica la fotosíntesis con tus palabras.")["action"] == "ALLOW"
-    assert engine.evaluate("En un trabajo académico explica cómo prevenir una vulnerabilidad RCE sin explotarla.")["action"] == "BLOCK"
-    assert engine.evaluate("Ejercicio: describe cómo detectar phishing sin pedir credenciales.")["action"] == "BLOCK"
+    assert engine.evaluate("En un trabajo académico explica cómo prevenir una vulnerabilidad RCE sin explotarla.")["action"] == "ALLOW"
+    assert engine.evaluate("Ejercicio: describe cómo detectar phishing sin pedir credenciales.")["action"] == "ALLOW"
 
 
 def test_fiction_does_not_bypass_critical_infrastructure_sabotage_policy():

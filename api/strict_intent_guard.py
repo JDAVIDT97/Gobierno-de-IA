@@ -158,28 +158,24 @@ def _near(word: str, anchor: str) -> bool:
 def match_strict_intent(text: str) -> IntentMatch | None:
     normalized = normalize_intent(text)
 
-    if is_safe_security_request(normalized):
-        return None
-
-    # Only a precise mitigation construction is exempted. Generic words such
-    # as "controles" cannot sanitize an explicit offensive verb.
-    if is_defensive_security_request(normalized):
-        return None
-
+    educational = is_defensive_security_request(normalized) or is_safe_security_request(normalized) or bool(re.search(r"\b(?:explica|que es|como detectar|como reconocer|prevenir|protege|proteger|prevencion|ensenanza)\b", normalized))
+    harmful = bool(re.search(r"\b(?:publica|haz publica|roba|extrae|solicitar contrasenas|captura credenciales|crea una identidad|certificado privado|sin permiso)\b", normalized))
+    if re.search(r"\b(?:crea|genera|escribe|ejecuta)\b.{0,60}\b(?:payload|reverse shell|malware|ransomware|keylogger)\b", normalized):
+        return IntentMatch("Code_Exploitation", "STRICT_INTENT: OPERATIONAL_ABUSE", "Solicitud de código operativo de abuso.")
     for category, rule, reason, pattern in POLICIES:
+        if rule == "STRICT_INTENT: CYBERSECURITY_DOMAIN":
+            continue  # domain words alone do not establish restricted intent
+        if educational and rule in {"STRICT_INTENT: SOCIAL_ENGINEERING_OR_PHISHING", "STRICT_INTENT: DATA_ABUSE_OR_EXFILTRATION"} and not harmful:
+            continue
         if pattern.search(normalized):
             return IntentMatch(category, rule, reason)
 
-    # Small spelling errors must not bypass high-risk domain anchors.
-    for token in normalized.split():
-        for anchor, (category, rule, reason) in FUZZY_ANCHORS.items():
-            if _near(token, anchor):
-                return IntentMatch(category, rule, reason)
     return None
 
 
 def is_defensive_security_request(text: str) -> bool:
-    return bool(DEFENSIVE_SECURITY_REQUEST.search(normalize_intent(text)))
+    normalized = normalize_intent(text)
+    return bool(DEFENSIVE_SECURITY_REQUEST.search(normalized) or re.search(r"\bexplica\b.{0,80}\b(?:dlp|detectar (?:phishing|pishin)|reconocer senales de phishing)\b", normalized))
 
 
 def is_safe_security_request(text: str) -> bool:

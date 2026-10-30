@@ -13,8 +13,8 @@
     "Role_Evasion_Jailbreak",
     "Legal_Misalignment"
   ],
-  "threshold_block": 0.5,
   "max_seq_length": 256,
   "deployment_scope": "local_testing",
-  "quantization": "fp32"
+  "quantization": "fp32",
+  "decision_rule": "argmax_per_window_any_restricted_blocks"
 }

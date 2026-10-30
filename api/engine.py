@@ -128,6 +128,7 @@ class DlpEngine:
         policy_path = MODEL_DIR / 'aegis_config.json'
         policy = json.loads(policy_path.read_text(encoding='utf-8')) if policy_path.exists() else config
         self.version = f"dlp-slm-v{policy.get('version', '2.0.0')}"
+        self.max_seq_length = int(policy.get("max_seq_length", 256))
         # ONNX is the production CPU path; no data leaves the host.
         onnx_path = MODEL_DIR / "model.int8.onnx" if (MODEL_DIR / "model.int8.onnx").exists() else MODEL_DIR / "model.onnx"
         if policy.get("backend") != "classical" and onnx_path.exists() and (MODEL_DIR / "tokenizer_config.json").exists():
@@ -178,12 +179,20 @@ class DlpEngine:
 
     def _predict_proba(self, prompt: str):
         if self.backend == "onnx-transformer":
-            encoded = self.tokenizer(prompt, return_tensors="np", truncation=True, max_length=512)
-            inputs = {name: encoded[name] for name in ("input_ids", "attention_mask") if name in encoded}
-            logits = self.model.run(["logits"], inputs)[0][0]
-            logits = logits - np.max(logits)
-            exp = np.exp(logits)
-            return exp / exp.sum()
+            cap = getattr(self, "max_seq_length", 256)
+            encoded = self.tokenizer(prompt, return_tensors="np", truncation=True,
+                                     max_length=cap, stride=min(32, cap//4),
+                                     return_overflowing_tokens=True, padding=True)
+            probabilities = []
+            for i in range(len(encoded["input_ids"])):
+                inputs = {name: encoded[name][i:i+1] for name in ("input_ids", "attention_mask") if name in encoded}
+                logits = self.model.run(["logits"], inputs)[0][0]
+                exp = np.exp(logits - np.max(logits))
+                probabilities.append(exp / exp.sum())
+            # Any restricted window retains the complete request. This is a
+            # policy aggregation, not a calibrated whole-document probability.
+            restricted = [p for p in probabilities if int(np.argmax(p)) != 0]
+            return max(restricted, key=lambda p: float(np.max(p))) if restricted else min(probabilities, key=lambda p: float(p[0]))
         return self.model.predict_proba([prompt])[0]
 
     def evaluate(self, prompt: str) -> Dict[str, Any]:
@@ -193,15 +202,6 @@ class DlpEngine:
         """
         t0 = time.perf_counter()
         rules_matched = []
-
-        if is_safe_security_request(prompt):
-            dt = (time.perf_counter() - t0) * 1000.0
-            return {
-                "action": "ALLOW", "risk_score": 0.01, "category": "Safe_Use",
-                "reason": "Solicitud educativa o defensiva con contexto seguro explícito.",
-                "matched_rules": ["POLICY: SAFE_SECURITY_GUIDANCE"],
-                "inference_time_ms": round(dt, 2), "confidence": 0.99,
-            }
 
         # Organization policy is fail-closed for the complete security and
         # unethical-intent domains. This deterministic layer precedes secrets,
@@ -289,15 +289,6 @@ class DlpEngine:
                 "confidence": 0.99,
             }
 
-        if is_defensive_security_request(prompt):
-            dt = (time.perf_counter() - t0) * 1000.0
-            return {
-                "action": "ALLOW", "risk_score": 0.01, "category": "Safe_Use",
-                "reason": "Orientación defensiva de ciberseguridad sin instrucciones operativas de abuso.",
-                "matched_rules": ["POLICY: DEFENSIVE_SECURITY_GUIDANCE"],
-                "inference_time_ms": round(dt, 2), "confidence": 0.99,
-            }
-
         # 2. Reglas de Excel Corporativo y Secretos de Negocio
         is_tabular = detect_tabular_structure(prompt)
         has_biz_keyword = bool(REGEX_BUSINESS_KEYWORDS.search(prompt))
@@ -373,22 +364,27 @@ class DlpEngine:
                 "confidence": 0.95
             }
 
-        # Academic wording is only a safe signal after every explicit abuse,
-        # evasion, leakage and sensitive-data rule has been evaluated.
+        # Safe exceptions are considered only after all explicit sensitive signals.
         if ((REGEX_ACADEMIC_TASK.search(prompt) or REGEX_PUBLIC_OR_SYNTHETIC_CONTEXT.search(prompt))
+                and re.match(r"\s*(?:tarea\s*:\s*)?(?:explica|resume|corrige|ordena|filtra)\b", prompt, re.I)
                 and not is_tabular and not has_biz_keyword and not has_private_source
-                and not has_confidential_context and not has_attachment):
-            dt = (time.perf_counter() - t0) * 1000.0
-            return {
-                "action": "ALLOW", "risk_score": 0.03, "category": "Safe_Use",
-                "reason": None, "matched_rules": ["HEURISTIC: ACADEMIC_NON_SENSITIVE_CONTENT"],
-                "inference_time_ms": round(dt, 2), "confidence": 0.97,
-            }
+                and not has_confidential_context and not has_attachment
+                and not has_sensitive_target and not has_external_disclosure
+                and not re.search(r"\b(?:privad[oa]s?|calificaciones|sin\s+permiso|sin\s+autorizaci[oó]n|solicitar\s+contrase(?:ñ|n)as)\b", prompt, re.I)):
+            return {"action":"ALLOW", "risk_score":0.03, "category":"Safe_Use", "reason":None,
+                    "matched_rules":["HEURISTIC: ACADEMIC_NON_SENSITIVE_CONTENT"],
+                    "inference_time_ms":round((time.perf_counter()-t0)*1000,2),"confidence":0.0}
+        if is_safe_security_request(prompt) or is_defensive_security_request(prompt):
+            return {"action":"ALLOW", "risk_score":0.01, "category":"Safe_Use",
+                    "reason":None, "matched_rules":["POLICY: DEFENSIVE_AFTER_SENSITIVE_CHECKS"],
+                    "inference_time_ms":round((time.perf_counter()-t0)*1000,2), "confidence":0.0}
 
         # 4. Inferencia con Modelo de Machine Learning (SLM)
         if self.model is not None:
             try:
                 probas = self._predict_proba(prompt)
+                if len(probas) != len(CLASS_NAMES) or not np.isfinite(probas).all() or np.any(probas < 0) or not np.isclose(np.sum(probas), 1.0, atol=1e-4):
+                    raise ValueError("Invalid classifier probabilities")
                 pred_idx = int(np.argmax(probas))
                 pred_class = CLASS_NAMES[pred_idx]
                 confidence = float(probas[pred_idx])
@@ -431,14 +427,5 @@ class DlpEngine:
             except Exception as e:
                 print(f"[!] Error en inferencia ML: {e}")
 
-        # Fallback de seguridad (por defecto ALLOW si no hay indicios de riesgo)
-        dt = (time.perf_counter() - t0) * 1000.0
-        return {
-            "action": "ALLOW",
-            "risk_score": 0.05,
-            "category": "Safe_Use",
-            "reason": None,
-            "matched_rules": ["FALLBACK: DEFAULT_SAFE"],
-            "inference_time_ms": round(dt, 2),
-            "confidence": 0.90
-        }
+        # No category or confidence is fabricated when prediction is unavailable.
+        raise RuntimeError("AUDIT_UNAVAILABLE: classifier unavailable or inference failed")

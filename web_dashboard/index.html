@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aegis AI | CISO Shadow AI & DLP Command Center</title>
-  <meta name="description" content="Plataforma de Gobernanza y Prevención de Fuga de Datos (DLP) contra Shadow AI con inferencia local de ultrabaja latencia (<50ms) y cumplimiento ISO/IEC 42001.">
+  <meta name="description" content="Plataforma de Gobernanza y Prevención de Fuga de Datos (DLP) contra Shadow AI con inspección local y registro de decisiones.">
   
   <!-- Tipografía de vanguardia -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   
   <!-- Chart.js para visualizaciones interactivas -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="/static/vendor/chart.umd.min.js"></script>
   
   <link rel="stylesheet" href="/static/styles.css?v=3">
 </head>
@@ -77,7 +77,7 @@
     <div class="nav-controls">
       <div class="system-status-chip">
         <span class="pulse-indicator"></span>
-        <span id="nav-system-status">SLM ACTIVO (&lt; 1ms CPU)</span>
+        <span id="nav-system-status">Consultando estado del servicio</span>
       </div>
       
       <button class="btn-quick-action" id="btn-quick-test-excel" title="Ejecutar prueba de intercepción de Excel corporativo">
@@ -91,7 +91,7 @@
           <polyline points="7 10 12 15 17 10" />
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
-        <span>Reporte ISO 42001</span>
+        <span>Registros de auditoría</span>
       </a>
 
       <a href="/v1/export-csv" target="_blank" class="btn-cyber-nav btn-nav-secondary" title="Exportar bitácora forense en CSV">
@@ -136,11 +136,11 @@
             </div>
           </div>
           <div class="card-value-box">
-            <span class="card-number odometer" id="kpi-total">0</span>
+            <span class="card-number odometer" id="kpi-total">&#8212;</span>
             <span class="card-unit">prompts</span>
           </div>
           <div class="card-footer">
-            <span class="pill pill-safe">100% En Perímetro</span>
+            <span class="pill pill-safe">Inspección local</span>
             <span class="card-detail">Inspección On-Device</span>
           </div>
         </div>
@@ -161,11 +161,11 @@
             </div>
           </div>
           <div class="card-value-box">
-            <span class="card-number odometer text-crimson" id="kpi-blocked">0</span>
+            <span class="card-number odometer text-crimson" id="kpi-blocked">&#8212;</span>
             <span class="card-unit">neutralizados</span>
           </div>
           <div class="card-footer">
-            <span class="pill pill-danger" id="kpi-block-rate">0.0% tasa bloqueo</span>
+            <span class="pill pill-danger" id="kpi-block-rate">Sin datos</span>
             <span class="card-detail">Exfiltración evitada</span>
           </div>
         </div>
@@ -186,7 +186,7 @@
             </div>
           </div>
           <div class="card-value-box">
-            <span class="card-number odometer" id="kpi-risk">0.00</span>
+            <span class="card-number odometer" id="kpi-risk">&#8212;</span>
             <span class="card-unit">/ 1.00</span>
           </div>
           <div class="card-footer">
@@ -203,7 +203,7 @@
         <div class="card-border-glow"></div>
         <div class="card-inner">
           <div class="card-header">
-            <span class="card-category">LATENCIA MEDIA CPU</span>
+            <span class="card-category">LATENCIA MEDIA DE INSPECCI&#211;N</span>
             <div class="card-icon-wrap icon-purple">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -211,12 +211,12 @@
             </div>
           </div>
           <div class="card-value-box">
-            <span class="card-number odometer text-purple" id="kpi-latency">0.8</span>
+            <span class="card-number odometer text-purple" id="kpi-latency">&#8212;</span>
             <span class="card-unit">ms</span>
           </div>
           <div class="card-footer">
             <span class="pill pill-safe">Meta RNF &lt; 50ms</span>
-            <span class="card-detail">~1,960 req/s cap</span>
+            <span class="card-detail">Media de registros</span>
           </div>
         </div>
       </div>
@@ -387,7 +387,7 @@
       <div class="panel-header header-with-filters">
         <div>
           <h2>Bitácora de Auditoría en Tiempo Real (SQLite SHA-256)</h2>
-          <p>Trazabilidad inmutable de todas las transacciones auditadas</p>
+          <p>Consulta de decisiones registradas por el prototipo</p>
         </div>
         <div class="audit-controls">
           <input type="text" id="log-search-input" class="cyber-input" placeholder="🔍 Buscar por usuario, prompt...">
@@ -408,6 +408,13 @@
             <option value="Role_Evasion_Jailbreak">Evasión por rol</option>
             <option value="Legal_Misalignment">Desalineación legal</option>
           </select>
+          <select id="log-page-size" class="cyber-select" aria-label="Cantidad de registros a mostrar">
+            <option value="10">10 registros</option>
+            <option value="25" selected>25 registros</option>
+            <option value="50">50 registros</option>
+            <option value="100">100 registros</option>
+            <option value="0">Todos los registros</option>
+          </select>
           <button id="btn-refresh-logs" class="btn-refresh-cyber" title="Actualizar registros en tiempo real">
             <span class="refresh-icon">🔄</span>
             <span>Refrescar</span>
@@ -416,6 +423,7 @@
       </div>
 
       <div class="table-responsive">
+        <p id="log-record-count" class="text-muted" role="status" style="padding: 12px 20px;">Cargando registros…</p>
         <table class="cyber-table" id="main-audit-table">
           <thead>
             <tr>
@@ -481,9 +489,9 @@
   </aside>
 
   <footer class="dashboard-footer">
-    <p>Aegis DLP Shadow AI Governance Engine &bull; Cumplimiento ISO/IEC 42001:2023 &bull; EU AI Act Art. 52</p>
+    <p>Aegis DLP &bull; Prototipo de inspección local &bull; Sin certificación normativa</p>
   </footer>
 
-  <script src="/static/app.js?v=2"></script>
+  <script src="/static/app.js?v=3"></script>
 </body>
 </html>

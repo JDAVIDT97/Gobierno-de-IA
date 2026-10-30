@@ -8,6 +8,7 @@ import os
 from datetime import datetime, timezone
 from sqlalchemy import create_engine, Column, Integer, String, Float, Index, CheckConstraint, text, event
 from sqlalchemy.orm import declarative_base, sessionmaker
+from .config import settings  # Load the local environment before selecting the database.
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_FILE = BASE_DIR / "audit_logs.db"

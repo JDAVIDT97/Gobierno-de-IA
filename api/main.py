@@ -1,7 +1,7 @@
 """
 Microservicio Principal FastAPI (api/main.py)
-Orquestador de inferencia de ultrabaja latencia (<50ms), persistencia en SQLite,
-analítica en tiempo real y exportación de reportes de cumplimiento ISO 42001 / EU AI Act.
+Servicio de inspección local y persistencia en SQLite,
+analítica y exportación de registros de auditoría.
 """
 
 import csv
@@ -65,7 +65,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="DLP Shadow AI Governance API",
-    description="Sistema de prevención de fuga de datos para GenAI (ChatGPT, Claude, Gemini) con inferencia local (<50ms) y auditoría ISO 42001.",
+    description="Prototipo de inspección local de solicitudes para GenAI y registro de decisiones.",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -86,14 +86,17 @@ app.add_middleware(
 @app.post("/v1/audit", response_model=AuditResponse, summary="Auditar e inferir riesgo de un prompt")
 def audit_prompt(payload: AuditRequest, db: Session = Depends(get_db)):
     """
-    Endpoint principal de interceptación (<50ms).
+    Endpoint principal de auditoría.
     Evalúa el texto, clasifica en una de las 4 clases de riesgo,
     anonimiza entidades sensibles y persiste el evento en SQLite para auditoría.
     """
     rate_limiter.check(str(payload.user_id))
 
     engine = DlpEngine.get_instance()
-    eval_result = engine.evaluate(payload.prompt)
+    try:
+        eval_result = engine.evaluate(payload.prompt)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail="AUDIT_UNAVAILABLE: envío retenido") from exc
 
     # Anonimización para almacenamiento forense seguro
     prompt_hash = hashlib.sha256(payload.prompt.encode("utf-8")).hexdigest()
@@ -120,7 +123,7 @@ def audit_prompt(payload: AuditRequest, db: Session = Depends(get_db)):
         db.commit()
     except Exception as e:
         db.rollback()
-        print(f"[!] Error al persistir log de auditoría: {e}")
+        raise HTTPException(status_code=503, detail="AUDIT_LOG_UNAVAILABLE: envío retenido") from e
 
     return AuditResponse(
         action=eval_result["action"],
@@ -129,7 +132,7 @@ def audit_prompt(payload: AuditRequest, db: Session = Depends(get_db)):
         reason=eval_result.get("reason"),
         model_version=engine.version,
         inference_time_ms=eval_result["inference_time_ms"],
-        redacted_preview=preview,
+        redacted_preview=preview if settings.store_redacted_preview else stored_summary,
         matched_rules=eval_result.get("matched_rules", [])
     )
 
@@ -156,7 +159,7 @@ def health_check(db: Session = Depends(get_db)):
 @app.get("/v1/logs", summary="Listar logs de auditoría con filtros")
 def get_logs(
     db: Session = Depends(get_db),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=0, le=200, description="Cantidad de registros; 0 devuelve todos los resultados filtrados."),
     offset: int = Query(0, ge=0),
     action: Optional[str] = None,
     category: Optional[str] = None,
@@ -183,7 +186,10 @@ def get_logs(
         query = query.filter(AuditLog.timestamp <= date_to)
     
     total = query.count()
-    records = query.order_by(desc(AuditLog.id)).offset(offset).limit(limit).all()
+    records_query = query.order_by(desc(AuditLog.id)).offset(offset)
+    if limit:
+        records_query = records_query.limit(limit)
+    records = records_query.all()
 
     return {
         "total": total,
@@ -264,6 +270,7 @@ def get_kpis(db: Session = Depends(get_db)):
         "total_allowed": allowed,
         "block_rate_pct": block_rate,
         "avg_risk_score": avg_risk_val,
+        "avg_inference_time_ms": db.query(func.avg(AuditLog.inference_time_ms)).scalar(),
         "top_categories": cat_counts,
         "high_risk_users": high_risk_users,
         "recent_trend": recent_trend
@@ -290,7 +297,7 @@ def export_csv(db: Session = Depends(get_db)):
         headers={"Content-Disposition": "attachment; filename=audit_logs_dlp.csv"}
     )
 
-@app.get("/v1/export-pdf", summary="Generar reporte de cumplimiento PDF (ISO 42001 & EU AI Act)")
+@app.get("/v1/export-pdf", summary="Generar reporte de registros de auditoría PDF")
 def export_pdf(db: Session = Depends(get_db)):
     """Genera un informe formal de auditoría para el CISO usando ReportLab."""
     try:
@@ -344,7 +351,7 @@ def export_pdf(db: Session = Depends(get_db)):
     elements.append(Paragraph("INFORME DE GOBERNANZA DE IA Y PREVENCIÓN DE FUGA (DLP)", title_style))
     elements.append(Paragraph(
         f"<b>Fecha de Generación:</b> {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')} | "
-        f"<b>Alineación:</b> ISO/IEC 42001:2023 & EU AI Act Art. 52 | <b>Versión:</b> dlp-slm-v1.0",
+        f"<b>Alcance:</b> registros locales | <b>Versión:</b> {DlpEngine.get_instance().version}",
         subtitle_style
     ))
     elements.append(Spacer(1, 10))
@@ -356,12 +363,12 @@ def export_pdf(db: Session = Depends(get_db)):
     rate = round((blocked / total * 100), 1) if total > 0 else 0.0
 
     kpi_data = [
-        ["Métrica de Gobernanza", "Valor Registrado", "Estado de Cumplimiento"],
-        ["Total Prompts Auditados", str(total), "Inspección Activa 100%"],
-        ["Intentos de Exfiltración Bloqueados", str(blocked), f"{rate}% tasa de bloqueo mitigada"],
-        ["Prompts Autorizados (Safe_Use)", str(allowed), "Conforme a Políticas TIC"],
-        ["Latencia de Inferencia p95", "< 5.0 ms", "Óptimo (Meta RNF < 50ms)"],
-        ["Privacidad Perimetral", "100% Inferencia Local CPU", "Cero fugas a nubes de terceros"]
+        ["Métrica de Gobernanza", "Valor Registrado", "Alcance"],
+        ["Total Prompts Auditados", str(total), "Eventos registrados"],
+        ["Solicitudes con decisión de bloqueo", str(blocked), f"{rate}% de los eventos registrados"],
+        ["Prompts Autorizados (Safe_Use)", str(allowed), "Decisión del motor"],
+        ["Latencia p95", "No medida en este informe", "Consultar benchmark identificado"],
+        ["Inspección", "Procesamiento local", "No acredita ausencia de fugas"]
     ]
     t = Table(kpi_data, colWidths=[200, 160, 180])
     t.setStyle(TableStyle([
@@ -419,12 +426,11 @@ def export_pdf(db: Session = Depends(get_db)):
         elements.append(Paragraph("<i>No se registran eventos críticos de bloqueo hasta la fecha.</i>", body_style))
 
     elements.append(Spacer(1, 20))
-    elements.append(Paragraph("3. Certificación de Cumplimiento Regulatorio", section_style))
+    elements.append(Paragraph("3. Alcance y límites del registro", section_style))
     cert_text = (
-        "Se certifica que el sistema DLP Shadow AI opera como guardrail automatizado en estricta conformidad con el "
-        "estándar <b>ISO/IEC 42001:2023</b> (Sistemas de Gestión de IA, Cláusula 6.1.2 - Gestión de Riesgos) y el "
-        "<b>Reglamento de Inteligencia Artificial de la Unión Europea (EU AI Act, Art. 52)</b>. "
-        "Todo el procesamiento de tokens se realiza en el perímetro seguro corporativo sin exfiltración de telemetría a proveedores externos."
+        "Este informe describe eventos registrados por el prototipo. No acredita certificación, "
+        "conformidad normativa, ausencia de incidentes ni cobertura completa de interfaces. "
+        "Una decisión de bloqueo no prueba por sí sola que se haya evitado un envío al proveedor."
     )
     elements.append(Paragraph(cert_text, body_style))
 
@@ -433,7 +439,7 @@ def export_pdf(db: Session = Depends(get_db)):
     return StreamingResponse(
         buffer,
         media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=reporte_gobernanza_iso42001.pdf"}
+        headers={"Content-Disposition": "attachment; filename=reporte_auditoria_aegis.pdf"}
     )
 
 # -------------------------------------------------------------

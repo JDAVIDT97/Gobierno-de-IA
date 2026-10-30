@@ -1,4 +1,5 @@
 .env
+artifacts/runtime/
 .venv/
 venv/
 __pycache__/
@@ -32,3 +33,6 @@ data/intent_curated_v5/sources/
 data/intent_curated_v5/auxiliary_original_labels.jsonl
 data/intent_curated_v5/quarantine.jsonl
 Nuevo_prompt.md
+artifacts/
+*.docx
+*.pdf

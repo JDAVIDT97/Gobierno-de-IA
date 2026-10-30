@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Script de arranque local para Aegis DLP (Sin Docker).
 .DESCRIPTION
@@ -33,7 +33,7 @@ function Print-Banner {
     Write-Host ""
     Write-Host " ========================================================================= " -ForegroundColor DarkCyan
     Write-Host "           🛡️  AEGIS DLP - SISTEMA DE GOBERNANZA DE IA LOCAL              " -ForegroundColor Cyan
-    Write-Host "       Inspección de Prompts en Tiempo Real (<50ms) | ISO/IEC 42001        " -ForegroundColor Gray
+    Write-Host "       Prototipo de inspección local y registro de decisiones             " -ForegroundColor Gray
     Write-Host " ========================================================================= " -ForegroundColor DarkCyan
     Write-Host ""
 }
@@ -77,6 +77,12 @@ Print-Banner
 $venvDir = Join-Path $ROOT_DIR ".venv"
 $venvPython = Join-Path $venvDir "Scripts\python.exe"
 $venvPip = Join-Path $venvDir "Scripts\pip.exe"
+$reviewPython = Join-Path $ROOT_DIR "artifacts\runtime\venv\Scripts\python.exe"
+if (Test-Path -LiteralPath $reviewPython) {
+    $venvDir = Join-Path $ROOT_DIR "artifacts\runtime\venv"
+    $venvPython = $reviewPython
+    $venvPip = Join-Path $venvDir "Scripts\pip.exe"
+}
 
 if (-not (Test-Path $venvPython)) {
     Write-Host "[*] Entorno virtual no detectado. Configurando .venv..." -ForegroundColor Cyan
