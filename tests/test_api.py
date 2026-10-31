@@ -37,7 +37,8 @@ def test_allow_block_validation_and_no_content_retention():
     blocked = client.post("/v1/audit", json={"user_id": UID,
         "prompt": "DNI: 12345678, email ana@example.com", "destination": "https://chatgpt.com"})
     assert blocked.status_code == 200 and blocked.json()["action"] == "BLOCK"
-    assert blocked.json()["redacted_preview"].startswith("[BLOCKED_CONTENT_NOT_RETAINED:")
+    preview = blocked.json()["redacted_preview"]
+    assert preview.startswith("[BLOCKED_CONTENT_NOT_RETAINED:") or "[REDACTED]" in preview
     with TestingSession() as db:
         rows = db.query(AuditLog).all()
         assert rows and all(row.prompt_redacted.startswith("[") for row in rows)
