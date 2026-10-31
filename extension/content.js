@@ -1,6 +1,6 @@
 /**
  * Shadow AI DLP Guard - Content Script Interceptor (extension/content.js)
- * Intercepta eventos submit en ChatGPT, Claude y Gemini en tiempo real (<50ms).
+ * Inspecciona envíos en las interfaces configuradas antes de autorizarlos.
  */
 
 (function () {
@@ -11,6 +11,8 @@
     location.hostname === "chat.openai.com";
   const isClaude = location.hostname === "claude.ai" || location.hostname.endsWith(".claude.ai");
   const isGemini = location.hostname === "gemini.google.com";
+  const isCopilot = ["copilot.microsoft.com", "copilot.com", "www.copilot.com", "copilot.cloud.microsoft"].includes(location.hostname) ||
+    (location.hostname === "m365.cloud.microsoft" && /^\/chat(?:\/|$)/.test(location.pathname));
   const isOtherGenAi = new Set([
     "copilot.microsoft.com", "www.perplexity.ai", "grok.com", "chat.mistral.ai",
     "chat.deepseek.com", "poe.com", "you.com"
@@ -19,7 +21,8 @@
 
   // Aegis must never authorize a send that it could not inspect. All protected
   // GenAI surfaces therefore use the same fail-closed path.
-  const strictInterception = isChatGPT || isClaude || isGemini || isOtherGenAi || isSandbox;
+  if (!(isChatGPT || isClaude || isGemini || isCopilot || isOtherGenAi || isSandbox)) return;
+  const strictInterception = true;
   let isAuditing = false;
   let bypassNextSubmit = false;
   let cachedInput = null;
@@ -31,7 +34,8 @@
   const MAX_INSPECTABLE_FILE_BYTES = 512 * 1024;
   const INPUT_SELECTOR = "#prompt-textarea, main div[contenteditable='true'], div[contenteditable='true'], textarea, [role='textbox']";
   const SEND_BUTTON_SELECTOR = "button[data-testid*='send'], button[data-test-id*='send'], button[aria-label*='Send'], button[aria-label*='Enviar'], button[aria-label*='Submit'], button[type='submit']";
-  const chatGPTSendSelector = "button#composer-submit-button, " + SEND_BUTTON_SELECTOR;
+  const COPILOT_SEND_SELECTOR = "#unauth-prompt-submit, button[data-testid='submit-button'], [role='button'][aria-label='Send' i], [role='button'][aria-label='Enviar' i]";
+  const chatGPTSendSelector = "button#composer-submit-button, " + SEND_BUTTON_SELECTOR + (isCopilot ? ", " + COPILOT_SEND_SELECTOR : "");
   const eventRoot = strictInterception ? window : document;
 
   // Generar ID anónimo persistente por sesión de navegador
@@ -42,13 +46,17 @@
   }).catch(error => console.warn("[DLP Guard] Identidad temporal activa:", error));
 
   // Localizar campo de entrada en ChatGPT, Claude o Gemini
-  function findInputElement() {
+  function findInputElement(preferredTarget = null) {
     if (strictInterception) {
+      const visibleEditor = el => el && el.getClientRects().length && !el.disabled &&
+        el.getAttribute("aria-hidden") !== "true" && getComputedStyle(el).visibility !== "hidden";
+      const focusedEditor = preferredTarget?.closest?.("textarea, [contenteditable='true'], [contenteditable='plaintext-only'], [role='textbox']");
+      if (visibleEditor(focusedEditor)) return (cachedInput = focusedEditor);
       // querySelector with a comma list follows DOM order, not selector priority.
-      for (const selector of ["#prompt-textarea", "textarea[name='prompt-textarea']", "main [contenteditable='true']", "main [contenteditable='plaintext-only']", "main textarea"]) {
+      // The logged-out composer may live outside <main> and use a different ID.
+      for (const selector of ["#unauth-prompt-input", "#prompt-textarea", "textarea[name='prompt-textarea']", "[data-testid='composer'] [contenteditable]", "form [contenteditable='true']", "form [contenteditable='plaintext-only']", "main [contenteditable='true']", "main [contenteditable='plaintext-only']", "main textarea", "textarea", "[contenteditable='true']", "[contenteditable='plaintext-only']", "[role='textbox']:not(input)"]) {
         const input = [...document.querySelectorAll(selector)].find(el =>
-          el.getClientRects().length && !el.disabled && el.getAttribute("aria-hidden") !== "true" &&
-          getComputedStyle(el).visibility !== "hidden");
+          visibleEditor(el));
         if (input) return (cachedInput = input);
       }
       return (cachedInput = null);
@@ -60,10 +68,20 @@
   const observer = new MutationObserver(() => {
     if (!cachedInput || !document.contains(cachedInput)) findInputElement();
   });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  // Document exists at document_start even before its root element is parsed.
+  observer.observe(document, { childList: true, subtree: true });
 
-  function findSendButton() {
-    return document.querySelector(SEND_BUTTON_SELECTOR);
+  function findSendButton(inputEl) {
+    if (isCopilot) {
+      // Copilot's public composer uses a div[role=button], outside a form.
+      const explicit = document.querySelector("#unauth-prompt-submit");
+      if (explicit?.getClientRects().length) return explicit;
+      for (let scope = inputEl?.parentElement; scope && scope !== document.body; scope = scope.parentElement) {
+        const button = scope.querySelector(COPILOT_SEND_SELECTOR + ", " + SEND_BUTTON_SELECTOR);
+        if (button?.getClientRects().length) return button;
+      }
+    }
+    return (inputEl?.closest("form") || document).querySelector(chatGPTSendSelector);
   }
 
   function resumeSubmission(inputEl, sendBtn) {
@@ -72,8 +90,8 @@
       bypassNextSubmit = true;
       try {
         const button = (sendBtn?.isConnected && sendBtn) ||
-          (inputEl.closest("form") || document).querySelector(chatGPTSendSelector);
-        if (button && !button.disabled) button.click();
+          findSendButton(inputEl);
+        if (button && !button.disabled && button.getAttribute("aria-disabled") !== "true") button.click();
         else inputEl.closest("form")?.requestSubmit();
       } finally {
         bypassNextSubmit = false;
@@ -159,7 +177,11 @@
     }
     isAuditing = true;
     try {
-      const contents = await Promise.all(files.map(async file => ({ name: file.name, text: await file.text() })));
+      const contents = await Promise.all(files.map(async file => {
+        const text = new TextDecoder("utf-8", {fatal: true}).decode(await file.arrayBuffer());
+        if (text.includes("\u0000")) throw new Error("El archivo contiene datos binarios y no puede inspeccionarse como texto UTF-8.");
+        return {name: file.name, text};
+      }));
       // Inspect all the file, in overlapping fragments compatible with the
       // API prompt limit. A sensitive value cannot hide after the first 4 KB.
       for (const file of contents) {
@@ -274,7 +296,7 @@
               <line x1="12" y1="16" x2="12" y2="12"></line>
               <line x1="12" y1="8" x2="12.01" y2="8"></line>
             </svg>
-            <span>Evento registrado en bitácora de auditoría SHA-256 conforme a <b>ISO/IEC 42001</b> y <b>EU AI Act</b>.</span>
+            <span>Decisión del prototipo registrada con una huella SHA-256. Este registro no acredita certificación ni cumplimiento normativo.</span>
           </div>
         </div>
 
@@ -342,14 +364,9 @@
         resumeSubmission(inputEl, sendBtn);
       }
     } catch (err) {
-      if (strictInterception) {
-        console.warn("[DLP Guard] Envío retenido:", err);
-        showAuditError("Envío detenido: no se pudo completar la auditoría. Comprueba que Aegis esté iniciado y recarga la pestaña si actualizaste la extensión. " + err.message);
-        return;
-      }
-      console.warn("[DLP Guard] Backend no disponible (fail-open por continuidad operativa):", err);
-      // Fail-open: permitir envío sin bloquear al usuario en caso de caída del backend
-      resumeSubmission(inputEl, sendBtn);
+      console.warn("[DLP Guard] Envío retenido:", err);
+      showAuditError("Envío detenido: no se pudo completar la auditoría. Comprueba que Aegis esté iniciado y recarga la pestaña si actualizaste la extensión. " + err.message);
+      return;
     } finally {
       isAuditing = false;
     }
@@ -359,7 +376,7 @@
   eventRoot.addEventListener("keydown", function (e) {
     if (bypassNextSubmit) return;
     if (e.key === "Enter" && !e.shiftKey && !(strictInterception && e.isComposing)) {
-      const inputEl = findInputElement();
+      const inputEl = findInputElement(e.target);
       if (inputEl && (inputEl === e.target || inputEl.contains(e.target))) {
         const text = getPromptText(inputEl);
         if (text) {
@@ -434,4 +451,10 @@
     auditFilesAndRelease(input, [...input.files]);
   }, true);
 
+  // Confirm readiness only after all interception handlers were installed.
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message?.type === "AEGIS_CONTENT_STATUS") {
+      sendResponse({ active: true, editorReady: Boolean(findInputElement()), version: chrome.runtime.getManifest().version });
+    }
+  });
 })();

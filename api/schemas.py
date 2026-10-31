@@ -52,6 +52,7 @@ class AuditRequest(BaseModel):
             return value
         allowed = {
             "chatgpt.com", "claude.ai", "gemini.google.com", "copilot.microsoft.com",
+            "copilot.com", "www.copilot.com", "copilot.cloud.microsoft", "m365.cloud.microsoft",
             "www.perplexity.ai", "grok.com", "x.com", "chat.mistral.ai",
             "chat.deepseek.com", "poe.com", "you.com",
         }

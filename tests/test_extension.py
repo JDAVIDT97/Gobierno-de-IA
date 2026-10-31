@@ -23,7 +23,7 @@ def test_live_safety_features_present():
     assert "setBadgeText" in background
     assert 'const API = "http://127.0.0.1:8000"' in background
     assert 'fetch("http://127.0.0.1:8000/health"' in popup
-    assert 'url: "http://127.0.0.1:8501/"' in popup
+    assert 'url: "http://127.0.0.1:8000/"' in popup
 
 
 def test_all_supported_ai_submit_selectors_present():

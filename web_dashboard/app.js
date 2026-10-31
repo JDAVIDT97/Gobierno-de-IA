@@ -15,7 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await adminFetch(link.getAttribute("href"));
       const url = URL.createObjectURL(await response.blob());
       const download = document.createElement("a"); download.href = url;
-      download.download = link.getAttribute("href").endsWith("pdf") ? "aegis_auditoria.pdf" : "aegis_auditoria.csv";
+      const extension = link.getAttribute("href").split("-").pop();
+      download.download = extension === "excel" ? "aegis_historial_por_IA.xlsx" : `aegis_auditoria.${extension}`;
       download.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) { console.warn(error.message); }
   }));

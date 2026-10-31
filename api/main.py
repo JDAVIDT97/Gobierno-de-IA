@@ -297,6 +297,19 @@ def export_csv(db: Session = Depends(get_db)):
         headers={"Content-Disposition": "attachment; filename=audit_logs_dlp.csv"}
     )
 
+
+@app.get("/v1/export-excel", summary="Descargar todo el historial en Excel, con una hoja por IA")
+def export_excel(db: Session = Depends(get_db)):
+    from .audit_excel import build_audit_workbook
+    records = db.query(AuditLog).order_by(desc(AuditLog.id)).all()
+    output = build_audit_workbook(records)
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=aegis_historial_por_IA.xlsx",
+                 "Cache-Control": "no-store"},
+    )
+
 @app.get("/v1/export-pdf", summary="Generar reporte de registros de auditoría PDF")
 def export_pdf(db: Session = Depends(get_db)):
     """Genera un informe formal de auditoría para el CISO usando ReportLab."""
