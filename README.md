@@ -129,8 +129,8 @@ The architecture combines a lightweight browser extension (Manifest V3), a deter
 
 ```bash
 # Clone the repository
-git clone https://github.com/aegis-dlp/aegis-dlp.git
-cd aegis-dlp
+git clone https://github.com/JDAVIDT97/Gobierno-de-IA.git
+cd Gobierno-de-IA
 
 # Create and activate virtual environment
 python -m venv .venv
