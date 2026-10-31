@@ -1,6 +1,6 @@
 """
 Módulo 5: Dashboard de Gobernanza Streamlit (dashboard/dashboard.py)
-Interfaz analítica para el CISO / equipo de Gobernanza de TIC con métricas de cumplimiento ISO 42001.
+Interfaz analítica para el CISO / equipo de Gobernanza de TIC con métricas de eventos registrados.
 """
 
 import os
@@ -49,7 +49,7 @@ def load_data():
     return df
 
 st.title("🛡️ Aegis DLP | Tablero de Gobernanza y Shadow AI")
-st.caption("Inspección perimetral de inferencia local (<50ms) alineada con ISO/IEC 42001:2023 y EU AI Act Art. 52")
+st.caption("Prototipo de inspección local y consulta de registros. Sin certificación normativa.")
 
 df = load_data()
 
@@ -103,7 +103,7 @@ with kpi_col3:
     st.metric("Nivel de Riesgo Medio", f"{avg_risk:.2f} / 1.00")
 with kpi_col4:
     avg_latency = filtered_df["inference_time_ms"].mean() if total_audited > 0 else 0.8
-    st.metric("Latencia Media CPU", f"{avg_latency:.2f} ms", delta="Meta < 50ms (OK)")
+    st.metric("Latencia Media CPU", f"{avg_latency:.2f} ms", delta=None)
 
 st.divider()
 
@@ -213,7 +213,8 @@ if not filtered_df.empty:
             mime="text/csv"
         )
     with exp_col2:
-        st.link_button("Descargar Informe Formal PDF (ISO 42001)", "http://localhost:8000/v1/export-pdf")
+        st.caption("Para exportar registros utiliza el panel web y su acceso administrativo.")
+        st.link_button("Abrir panel web de auditoría", "http://localhost:8000/")
 
 else:
     st.warning("No hay registros en la base de datos de auditoría aún. Inicia la API y realiza pruebas.")

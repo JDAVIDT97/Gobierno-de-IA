@@ -1323,7 +1323,7 @@ body[data-active-view="simulator"] #sec-simulator {
 }
 
 .chart-risk-card {
-  min-height: 360px;
+  min-height: 450px;
   border-color: rgba(0, 240, 255, 0.22);
   background: linear-gradient(145deg, rgba(14, 31, 50, 0.98), rgba(10, 17, 31, 0.98));
 }
@@ -1344,27 +1344,70 @@ body[data-active-view="simulator"] #sec-simulator {
 }
 
 .chart-risk-wrapper {
-  height: 292px;
-  padding: 6px 30px 20px;
+  height: 370px;
+  padding: 6px 20px 24px;
 }
 
 .chart-center-label {
-  position: absolute;
-  top: 47%;
-  left: 50%;
-  color: var(--text-muted);
-  font: 700 10px var(--font-mono);
-  letter-spacing: 1.2px;
-  line-height: 1.5;
-  text-align: center;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
+  display: none;
 }
 
-.chart-center-label strong {
-  color: var(--text-main);
-  font-size: 12px;
+.chart-trend-card {
+  min-height: 450px;
+  border-color: rgba(0, 240, 255, 0.22);
+  background: linear-gradient(145deg, rgba(14, 31, 50, 0.98), rgba(10, 17, 31, 0.98));
 }
+
+.chart-trend-card .panel-header {
+  padding: 20px 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chart-trend-card h2 {
+  font-size: 19px;
+  margin-top: 5px;
+}
+
+.chart-trend-wrapper {
+  height: 370px;
+  padding: 10px 16px 20px;
+}
+
+.trend-legend-badges {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.badge-dot.dot-blocked {
+  background-color: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+}
+
+.badge-dot.dot-allowed {
+  background-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+}
+
 
 .table-responsive-mini {
   padding: 0 16px 16px;
@@ -1611,7 +1654,10 @@ body[data-active-view="simulator"] #sec-simulator {
   .intro-status { align-self: flex-start; }
   .section-label { margin-top: 10px; }
   .panel-large, .panel-radar, .panel-audit-log { padding: 18px; }
-  .chart-risk-card { min-height: 330px; }
+  .chart-risk-card { min-height: 420px; }
   .chart-risk-card .panel-header { padding: 18px 18px 0; }
-  .chart-risk-wrapper { height: 270px; padding-inline: 12px; }
+  .chart-risk-wrapper { height: 340px; padding-inline: 12px; }
+  .chart-trend-card { min-height: 420px; }
+  .chart-trend-card .panel-header { padding: 18px 18px 0; }
+  .chart-trend-wrapper { height: 340px; padding-inline: 12px; }
 }

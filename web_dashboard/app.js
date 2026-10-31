@@ -307,16 +307,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const ctx = document.getElementById("chart-risk-distribution");
     if (!ctx) return;
 
-    const labels = Object.keys(categories).length ? Object.keys(categories) : ["Safe_Use", "Business_Secrets", "PII_Leak", "Proprietary_Code"];
-    const values = Object.keys(categories).length ? Object.values(categories) : [0, 0, 0, 0];
+    // Ordenar categorías de forma descendente por volumen para visualización limpia
+    const entries = Object.entries(categories || {});
+    if (!entries.length) {
+      entries.push(["Safe_Use", 0], ["Business_Secrets", 0], ["PII_Leak", 0], ["Proprietary_Code", 0]);
+    }
+    entries.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 
+    const labels = entries.map(e => e[0]);
+    const values = entries.map(e => e[1]);
+
+    // Paleta con colores distintos y contrastantes para cada una de las 9 categorías
     const colorsMap = {
-      Safe_Use: "#10b981",
-      Business_Secrets: "#ff2a5f",
-      PII_Leak: "#f59e0b",
-      Proprietary_Code: "#9d4edd"
+      Safe_Use: "#10b981",               // Verde esmeralda (Permitido / Seguro)
+      PII_Leak: "#f59e0b",               // Ámbar dorado (Datos personales / DNI / PII)
+      Business_Secrets: "#ef4444",       // Rojo carmín (Secretos de negocio / Financiero)
+      Role_Evasion_Jailbreak: "#eab308", // Amarillo intenso (Jailbreak / Evasión de rol)
+      Social_Engineering: "#f97316",     // Naranja coral (Ingeniería social / Phishing)
+      Legal_Misalignment: "#3b82f6",     // Azul zafiro (Violaciones legales / regulatorias)
+      Data_Exfiltration: "#06b6d4",      // Cian turquesa (Comandos de exfiltración)
+      Proprietary_Code: "#8b5cf6",       // Violeta / Púrpura (Código fuente propietario)
+      Code_Exploitation: "#ec4899"       // Magenta neón (Exploits y vulnerabilidades)
     };
-    const bgColors = labels.map(l => colorsMap[l] || "#00f0ff");
+    const defaultPalette = ["#10b981", "#f59e0b", "#ef4444", "#eab308", "#f97316", "#3b82f6", "#06b6d4", "#8b5cf6", "#ec4899"];
+    const bgColors = labels.map((l, i) => colorsMap[l] || defaultPalette[i % defaultPalette.length]);
 
     if (chartDistribution) {
       chartDistribution.data.labels = labels;
@@ -324,6 +338,30 @@ document.addEventListener("DOMContentLoaded", () => {
       chartDistribution.data.datasets[0].backgroundColor = bgColors;
       chartDistribution.update();
     } else {
+      // Plugin para centrar matemáticamente el texto en el ojo de la dona sin desalinearse
+      const centerTextPlugin = {
+        id: "centerTextPlugin",
+        afterDraw(chart) {
+          if (chart.config.type !== "doughnut") return;
+          const meta = chart.getDatasetMeta(0);
+          if (!meta || !meta.data || !meta.data.length) return;
+          const { x, y } = meta.data[0];
+          const c = chart.ctx;
+          c.save();
+          c.textAlign = "center";
+          c.textBaseline = "middle";
+
+          c.fillStyle = "#64748b";
+          c.font = "700 9px monospace";
+          c.fillText("RIESGO", x, y - 8);
+
+          c.fillStyle = "#f8fafc";
+          c.font = "bold 13px 'Outfit', sans-serif";
+          c.fillText("GLOBAL", x, y + 8);
+          c.restore();
+        }
+      };
+
       chartDistribution = new Chart(ctx, {
         type: "doughnut",
         data: {
@@ -331,28 +369,52 @@ document.addEventListener("DOMContentLoaded", () => {
           datasets: [{
             data: values,
             backgroundColor: bgColors,
-            borderColor: "#0e1626",
+            borderColor: "#0b1324",
             borderWidth: 2,
-            hoverOffset: 6
+            hoverOffset: 7
           }]
         },
+        plugins: [centerTextPlugin],
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          layout: {
+            padding: { top: 6, bottom: 8, left: 6, right: 6 }
+          },
           plugins: {
             legend: {
               position: "bottom",
               labels: {
-                color: "#d7e3f0",
-                padding: 16,
-                boxWidth: 14,
+                color: "#cbd5e1",
+                padding: 10,
+                boxWidth: 10,
                 boxHeight: 10,
-                font: { family: "Outfit", size: 12, weight: "600" }
+                usePointStyle: true,
+                pointStyle: "circle",
+                font: { family: "Outfit, sans-serif", size: 11, weight: "500" }
+              }
+            },
+            tooltip: {
+              backgroundColor: "rgba(10, 18, 30, 0.95)",
+              titleColor: "#00f0ff",
+              bodyColor: "#f1f5f9",
+              borderColor: "rgba(0, 240, 255, 0.3)",
+              borderWidth: 1,
+              padding: 10,
+              displayColors: true,
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || "";
+                  const val = context.raw || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                  return ` ${label}: ${val} (${pct}%)`;
+                }
               }
             }
           },
-          cutout: "62%",
-          radius: "92%"
+          cutout: "66%",
+          radius: "90%"
         }
       });
     }
@@ -363,12 +425,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const ctx = document.getElementById("chart-trend");
     if (!ctx) return;
 
-    const labels = trend.map((t, idx) => `#${t.id}`).reverse();
-    const riskScores = trend.map(t => t.risk_score).reverse();
+    if (!trend || !trend.length) return;
+
+    // Invertir para mostrar de forma cronológica (más antiguo a más reciente)
+    const items = [...trend].reverse();
+
+    const labels = items.map(t => `#${t.id}`);
+    const riskScores = items.map(t => t.risk_score);
+    // Colores dinámicos por decisión: Verde si ALLOW, Rojo/Rosa si BLOCK
+    const pointColors = items.map(t => t.action === "ALLOW" ? "#10b981" : "#ef4444");
+    const pointBorders = items.map(t => t.action === "ALLOW" ? "#34d399" : "#fca5a5");
+
+    const chartAreaCtx = ctx.getContext("2d");
+    const gradient = chartAreaCtx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, "rgba(0, 240, 255, 0.30)");
+    gradient.addColorStop(0.65, "rgba(0, 240, 255, 0.05)");
+    gradient.addColorStop(1, "rgba(0, 240, 255, 0.0)");
 
     if (chartTrend) {
       chartTrend.data.labels = labels;
       chartTrend.data.datasets[0].data = riskScores;
+      chartTrend.data.datasets[0].pointBackgroundColor = pointColors;
+      chartTrend.data.datasets[0].pointBorderColor = pointBorders;
+      chartTrend.data.datasets[0]._trendItems = items;
       chartTrend.update();
     } else {
       chartTrend = new Chart(ctx, {
@@ -379,22 +458,75 @@ document.addEventListener("DOMContentLoaded", () => {
             label: "Nivel de Riesgo Evaluado",
             data: riskScores,
             borderColor: "#00f0ff",
-            backgroundColor: "rgba(0, 240, 255, 0.1)",
+            borderWidth: 2.5,
+            backgroundColor: gradient,
             fill: true,
             tension: 0.35,
-            pointRadius: 4,
-            pointBackgroundColor: "#ff2a5f"
+            pointRadius: 6,
+            pointHoverRadius: 9,
+            pointBackgroundColor: pointColors,
+            pointBorderColor: pointBorders,
+            pointBorderWidth: 2,
+            _trendItems: items
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: {
+            mode: "index",
+            intersect: false
+          },
           scales: {
-            x: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#64748b" } },
-            y: { min: 0, max: 1.0, grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#64748b" } }
+            x: {
+              grid: { color: "rgba(255, 255, 255, 0.04)" },
+              ticks: {
+                color: "#94a3b8",
+                font: { family: "monospace", size: 11, weight: "600" },
+                maxRotation: 45,
+                minRotation: 25
+              }
+            },
+            y: {
+              min: 0,
+              max: 1.05,
+              grid: { color: "rgba(255, 255, 255, 0.05)" },
+              ticks: {
+                color: "#64748b",
+                stepSize: 0.2,
+                callback: function(val) {
+                  return `${Math.round(val * 100)}%`;
+                },
+                font: { family: "monospace", size: 10 }
+              }
+            }
           },
           plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: "rgba(10, 18, 30, 0.95)",
+              titleColor: "#00f0ff",
+              bodyColor: "#f1f5f9",
+              borderColor: "rgba(0, 240, 255, 0.3)",
+              borderWidth: 1,
+              padding: 12,
+              callbacks: {
+                title: function(context) {
+                  return `Evento ${context[0].label}`;
+                },
+                label: function(context) {
+                  const items = context.dataset._trendItems || [];
+                  const item = items[context.dataIndex] || {};
+                  const pct = Math.round((context.raw || 0) * 100);
+                  const actionStr = item.action === "ALLOW" ? "🟢 AUTORIZADO" : "🔴 BLOQUEADO";
+                  return [
+                    ` Decisión: ${actionStr}`,
+                    ` Categoría: ${item.category || "N/A"}`,
+                    ` Riesgo: ${pct}%`
+                  ];
+                }
+              }
+            }
           }
         }
       });

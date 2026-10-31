@@ -14,7 +14,7 @@
   <!-- Chart.js para visualizaciones interactivas -->
   <script src="/static/vendor/chart.umd.min.js"></script>
   
-  <link rel="stylesheet" href="/static/styles.css?v=3">
+  <link rel="stylesheet" href="/static/styles.css?v=5">
 </head>
 <body class="cyber-dark" data-active-view="overview">
   <!-- Fondo con efecto de malla y orbe brillante en movimiento -->
@@ -356,11 +356,18 @@
       </div>
 
       <!-- Gráfico de Tendencia Temporal -->
-      <div class="motion-card">
+      <div class="motion-card chart-trend-card">
         <div class="panel-header">
-          <h2>Monitoreo de Eventos en Tiempo Real</h2>
+          <div>
+            <span class="chart-kicker">TELEMETRÍA EN VIVO</span>
+            <h2>Monitoreo de Eventos en Tiempo Real</h2>
+          </div>
+          <div class="trend-legend-badges">
+            <span class="trend-badge"><span class="badge-dot dot-blocked"></span> Bloqueado</span>
+            <span class="trend-badge"><span class="badge-dot dot-allowed"></span> Seguro</span>
+          </div>
         </div>
-        <div class="chart-wrapper">
+        <div class="chart-wrapper chart-trend-wrapper">
           <canvas id="chart-trend"></canvas>
         </div>
       </div>
@@ -499,6 +506,6 @@
     <p>Aegis DLP &bull; Prototipo de inspección local &bull; Sin certificación normativa</p>
   </footer>
 
-  <script src="/static/app.js?v=3"></script>
+  <script src="/static/app.js?v=5"></script>
 </body>
 </html>

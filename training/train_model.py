@@ -26,7 +26,7 @@ def dataset_classes():
     rows = [json.loads(line) for line in (DATA / "train.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
     return [next(row["label_name"] for row in rows if row["label"] == label) for label in range(max(row["label"] for row in rows) + 1)]
 
-CLASSES = dataset_classes()
+CLASSES = []
 
 
 def load_jsonl(name: str):
@@ -118,6 +118,8 @@ def train_transformer(args):
     from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
                               DataCollatorWithPadding, EarlyStoppingCallback, Trainer, TrainingArguments)
 
+    from transformers import set_seed
+    set_seed(42)  # Before tokenizer, classifier head and LoRA initialization.
     train_x, train_y, _ = load_jsonl("train.jsonl")
     val_x, val_y, _ = load_jsonl("val.jsonl")
     test_x, test_y, _ = load_jsonl("test.jsonl")
@@ -129,9 +131,9 @@ def train_transformer(args):
         rng.shuffle(selected)
         train_x = [train_x[int(i)] for i in selected]
         train_y = train_y[selected]
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    tokenizer = AutoTokenizer.from_pretrained(args.model, revision=args.model_revision)
     model = AutoModelForSequenceClassification.from_pretrained(
-        args.model, num_labels=len(CLASSES), id2label={i: c for i, c in enumerate(CLASSES)},
+        args.model, revision=args.model_revision, num_labels=len(CLASSES), id2label={i: c for i, c in enumerate(CLASSES)},
         label2id={c: i for i, c in enumerate(CLASSES)})
     if args.lora:
         architecture = f"{args.model} {getattr(model.config, 'model_type', '')} {model.__class__.__name__}".lower()
@@ -161,7 +163,13 @@ def train_transformer(args):
     trainer = Trainer(model=model, args=train_args, train_dataset=train_ds, eval_dataset=val_ds,
                       processing_class=tokenizer, data_collator=DataCollatorWithPadding(tokenizer),
                       compute_metrics=compute_metrics, callbacks=[EarlyStoppingCallback(early_stopping_patience=2)])
+    run_config = {"arguments": {k: str(v) if isinstance(v, Path) else v for k,v in vars(args).items()},
+                  "resolved_base_revision": getattr(model.config, "_commit_hash", None),
+                  "training_arguments": train_args.to_dict(), "classes": CLASSES,
+                  "seed_before_model_initialization": 42}
+    (OUT / "run_config.json").write_text(json.dumps(run_config, indent=2, default=str), encoding="utf8")
     started = time.perf_counter(); trainer.train(); duration = time.perf_counter() - started
+    trainer.save_state()
     prediction = trainer.predict(test_ds)
     logits = prediction.predictions
     scores = torch.softmax(torch.tensor(logits), dim=-1).numpy()
@@ -202,11 +210,12 @@ def main():
     parser.add_argument('--quantize-int8', action='store_true',
                         help='Also export INT8; it must independently pass parity before serving')
     parser.add_argument("--model", default="microsoft/deberta-v3-small")
+    parser.add_argument("--model-revision", help="Pinned model base revision or commit")
     parser.add_argument("--epochs", type=int, default=4)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--learning-rate", type=float, default=2e-4,
                         help="LoRA default; use 2e-5 with --no-lora full fine-tuning")
-    parser.add_argument("--max-length", type=int, default=512)
+    parser.add_argument("--max-length", type=int, default=256)
     parser.add_argument("--max-train-samples", type=int, default=4000,
                         help="Balanced training cap for CPU; use 0 for the full 16k split")
     parser.add_argument("--run-name", default="intent_transformer_3epochs",
@@ -230,7 +239,7 @@ def main():
     report = train_transformer(args) if args.backend == "transformer" else train_classical()
     REPORT.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
     config = {"model_type": "aegis-dlp", "backend": args.backend, "version": args.version, "classes": CLASSES,
-              "threshold_block": .5, "max_seq_length": args.max_length if args.backend == "transformer" else 4096}
+              "decision_rule": "argmax", "max_seq_length": args.max_length if args.backend == "transformer" else 4096}
     # Preserve the Hugging Face configuration needed to reload PyTorch weights.
     if args.backend == "classical":
         (OUT / "config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
